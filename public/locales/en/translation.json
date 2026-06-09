@@ -1,0 +1,41 @@
+{
+  "nav": {
+    "governorates": "Governorates",
+    "landmarks": "Landmarks",
+    "hotels": "Hotels",
+    "itineraries": "Itineraries",
+    "flights": "Flights",
+    "tripBuilder": "Trip Builder",
+    "login": "Login / Register",
+    "logout": "Logout",
+    "dashboard": "Dashboard"
+  },
+  "home": {
+    "heroTitle": "Discover the Hidden Wonders of Egypt",
+    "heroSubtitle": "Experience Egypt beyond the pyramids. Explore authentic culture, stunning landscapes, and luxury tourism.",
+    "searchPlaceholder": "Search landmarks...",
+    "searchBtn": "Search",
+    "exploreAttractionsBtn": "Explore Attractions",
+    "planYourTripBtn": "Plan Your Trip",
+    "buildTripBtn": "Build Custom Trip",
+    "browseItinerariesBtn": "Browse Guided Itineraries",
+    "mapTitle": "Interactive Map Explorer",
+    "mapSubtitle": "Explore Egypt's rich history. Click on any governorate label to fly to the region, view local landmarks, and browse top destinations.",
+    "feat1Title": "Premium Curated Guides",
+    "feat1Desc": "Expertly designed travel plans bringing Egypt's rich history directly to your itinerary.",
+    "feat2Title": "Flexible Custom Trip Builder",
+    "feat2Desc": "Set your budget, select your preferred tourism types, and get a tailored tour plan in seconds.",
+    "feat3Title": "Secure Payments",
+    "feat3Desc": "Hassle-free checkout via Stripe or PayPal with instant confirmation and easy cancellations.",
+    "categoriesTitle": "Tourism Categories",
+    "categoriesSubtitle": "Explore Egypt according to your personal interests and travel styles.",
+    "trendingTitle": "Trending Landmarks",
+    "trendingSubtitle": "Discover the most highly-rated destinations loved by travelers.",
+    "featuredGovTitle": "Featured Governorates",
+    "featuredGovSubtitle": "From coastal havens to historical heartlands, find your next destination.",
+    "viewAllGov": "View all Governorates",
+    "promoTitle": "Design Your Own Ancient Journey",
+    "promoDesc": "Why stick to predefined tours when you can curate your own? Specify your budget, trip duration, preferred style of tourism, and let our smart planner draft flights, hotel choices, and top landmarks for you.",
+    "promoBtn": "Start Planning Now"
+  }
+}

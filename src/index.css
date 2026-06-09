@@ -1,0 +1,190 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Outfit', sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cinzel', serif;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #fdfbf2;
+}
+::-webkit-scrollbar-thumb {
+  background: #C9A84C;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a37a37;
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #f5E6C8 25%, #faf4df 50%, #f5E6C8 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* Light/Dark mode styling system */
+:root {
+  --gold-primary: #C9963B;
+  --gold-dark: #b8791e;
+  --gold-light: #e8b96a;
+  --bg-base: #fdf8f0;
+  --bg-surface: #f5edda;
+  --bg-card: #ffffff;
+  --bg-sunken: #ede8df;
+  --bg-raised: #ecdfc0;
+  --border-default: #d4cec4;
+  --border-gold: rgba(184, 121, 30, 0.4);
+  --text-primary: #1a1612;
+  --text-secondary: #6b6254;
+  --text-hint: #a89f92;
+  --success: #1a8a44;
+  --warning: #c07a00;
+  --danger: #c03030;
+  --info: #1a5cb0;
+}
+
+html.dark {
+  --gold-primary: #C9963B;
+  --gold-light: #E8B96A;
+  --gold-pale: #F5D89A;
+  --bg-base: #0a0805;
+  --bg-surface: #1a1408;
+  --bg-card: #1c1c26;
+  --bg-sunken: #111118;
+  --bg-raised: #2e2210;
+  --border-default: #2a2a38;
+  --border-gold: rgba(201, 150, 59, 0.35);
+  --text-primary: #F5D89A;
+  --text-secondary: #9d9aaa;
+  --text-hint: #4e4c5c;
+  --success: #4CDE7A;
+  --warning: #FFAA33;
+  --danger: #FF5555;
+  --info: #55AAFF;
+}
+
+body {
+  background-color: var(--bg-base) !important;
+  color: var(--text-primary) !important;
+  transition: background-color 0.25s ease-in-out, color 0.25s ease-in-out;
+}
+
+html.dark body {
+}
+
+/* Global class overrides for cards */
+.bg-white {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+  box-shadow: 0 4px 20px -2px rgba(184, 121, 30, 0.05);
+}
+
+html.dark .bg-white {
+  box-shadow: 0 4px 25px -2px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(201, 150, 59, 0.1);
+  border-color: var(--border-gold) !important;
+}
+
+/* Metallic Gold utilities */
+.border-egyptian-gold {
+  border-image: linear-gradient(45deg, #b8791e, #F5D89A, #C9963B, #e8b96a) 1;
+}
+
+.text-gold-gradient {
+  background: linear-gradient(45deg, #C9963B, #F5D89A, #b8791e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Headings colors and ornaments */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary) !important;
+  letter-spacing: 0.05em;
+  font-family: 'Cinzel', serif;
+}
+
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+  color: var(--gold-pale) !important;
+  text-shadow: 0 0 10px rgba(201, 150, 59, 0.25);
+}
+
+/* Specific text color classes */
+.text-navy-500,
+.text-navy-900,
+.text-navy-950 {
+  color: var(--text-primary) !important;
+}
+
+.text-gray-700,
+.text-gray-600,
+.text-gray-500 {
+  color: var(--text-secondary) !important;
+}
+
+.border-gray-200,
+.border-gray-150,
+.border-gray-100 {
+  border-color: var(--border-default) !important;
+}
+
+/* Style inputs */
+input,
+select,
+textarea {
+  background-color: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: var(--bg-base) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-gold) !important;
+}
+
+table {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+thead {
+  background-color: var(--bg-sunken) !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark thead {
+  background-color: var(--bg-surface) !important;
+  color: var(--gold-primary) !important;
+}
+
+tbody tr:hover {
+  background-color: var(--bg-raised) !important;
+}
