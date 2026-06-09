@@ -565,7 +565,10 @@ export default function TripBuilder() {
                           step={50}
                           value={aiBudget}
                           onChange={(e) => setAiBudget(Number(e.target.value))}
-                          className="w-full h-1.5 bg-[#EBE2CD] rounded-lg appearance-none cursor-pointer accent-[#C1A249]"
+                          className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-[#C1A249]"
+                          style={{
+                            background: `linear-gradient(to right, #C1A249 ${((aiBudget - 200) / (8000 - 200)) * 100}%, #EBE2CD ${((aiBudget - 200) / (8000 - 200)) * 100}%)`
+                          }}
                         />
                         <div className="relative w-[150px]">
                           <span className="absolute left-3 top-[10px] text-[#A68B53] font-bold text-sm">$</span>
@@ -602,9 +605,9 @@ export default function TripBuilder() {
                         <label className="text-[11px] font-bold text-navy-900 uppercase tracking-widest block">Accommodations</label>
                         <div className="grid grid-cols-3 gap-4">
                           {[
-                            { stars: 3, label: '3★+', img: 'https://images.unsplash.com/photo-1542314831-c6a4d27ce6a2?auto=format&fit=crop&w=300&q=80' },
-                            { stars: 4, label: '4★+', img: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=300&q=80' },
-                            { stars: 5, label: '5★ Luxury', img: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80' }
+                            { stars: 3, label: '3★+', img: '/hotel_3_star_ai.png' },
+                            { stars: 4, label: '4★+', img: '/hotel_4_star_ai.png' },
+                            { stars: 5, label: '5★ Luxury', img: '/hotel_5_star_ai.png' }
                           ].map((tier) => (
                             <button
                               key={tier.stars}

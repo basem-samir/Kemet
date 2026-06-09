@@ -8,7 +8,6 @@ export default function Hotels() {
   const [search, setSearch] = useState('');
   const [stars, setStars] = useState('all');
   const [selectedGovernorate, setSelectedGovernorate] = useState('all');
-  const [budget, setBudget] = useState(null);
   const [favorites, setFavorites] = useState(new Set());
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
@@ -54,16 +53,6 @@ export default function Hotels() {
   const hotels = hotelsData?.data?.data?.hotels || hotelsData?.data?.hotels || hotelsData?.data || [];
   const governorates = govData?.data?.data?.governorates || govData?.data?.governorates || [];
 
-  const maxHotelPrice = hotels.length > 0 
-    ? Math.max(...hotels.map(h => 
-        h.roomTypes?.length > 0 
-          ? Math.max(...h.roomTypes.map(rt => rt.pricePerNight)) 
-          : 0
-      )) 
-    : 5000;
-  
-  const currentBudget = budget === null ? (maxHotelPrice > 0 ? maxHotelPrice : 5000) : budget;
-
   // Handle Favorite Toggle
   const toggleFavorite = async (e, id) => {
     e.preventDefault();
@@ -96,12 +85,7 @@ export default function Hotels() {
     const hotelGovId = h.governorate_id?._id || h.governorate_id;
     const matchesGov = selectedGovernorate === 'all' || hotelGovId === selectedGovernorate;
 
-    const minPrice = h.roomTypes?.length > 0
-      ? Math.min(...h.roomTypes.map(rt => rt.pricePerNight))
-      : 1500;
-    const matchesBudget = minPrice <= currentBudget;
-
-    return matchesSearch && matchesStars && matchesGov && matchesBudget;
+    return matchesSearch && matchesStars && matchesGov;
   });
 
   const totalPages = Math.ceil(filteredHotels.length / itemsPerPage);
@@ -148,14 +132,14 @@ export default function Hotels() {
                   <div className="space-y-2.5">
                     <label className="text-[11px] font-bold text-gray-900 uppercase tracking-wider block text-left">Search</label>
                     <div className="relative">
-                      <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4.5 w-4.5 text-[#c1a249]" />
+                      <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#c1a249]" />
                       <input
                         type="text"
                         placeholder="Hotel or city name..."
                         value={search}
                         onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                        className="pl-11 w-full p-3.5 border border-[#c1a249] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#c1a249] text-xs font-semibold transition"
-                        style={{ backgroundColor: '#ffffff', color: '#1a1612' }}
+                        className="pl-12 w-full p-3.5 border border-[#c1a249] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#c1a249] text-xs font-semibold transition bg-transparent placeholder-gray-400"
+                        style={{ color: '#1a1612' }}
                       />
                     </div>
                   </div>
@@ -176,28 +160,11 @@ export default function Hotels() {
                         ))}
                       </select>
                       <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[#c1a249]">
-                        <svg className="fill-current h-4.5 w-4.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                        <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                       </div>
                     </div>
                   </div>
 
-                  {/* Budget Slider */}
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-[11px] font-bold text-gray-900 uppercase tracking-wider">
-                      <span>Max Price Per Night</span>
-                      <span className="font-serif font-black text-sm" style={{ color: '#c1a249' }}>{currentBudget} EGP</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max={maxHotelPrice > 0 ? maxHotelPrice : 5000}
-                      step="100"
-                      value={currentBudget}
-                      onChange={(e) => { setBudget(Number(e.target.value)); setCurrentPage(1); }}
-                      className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-[#c1a249]"
-                      style={{ backgroundColor: '#FAF5E8' }}
-                    />
-                  </div>
 
                   {/* Star Class Filter */}
                   <div className="space-y-3 pt-5 border-t border-gray-150">

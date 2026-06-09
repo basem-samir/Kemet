@@ -87,7 +87,7 @@ export default function Itineraries() {
         
         {/* Hero Content */}
         <div className="relative z-10 max-w-3xl mx-auto space-y-4">
-          <h1 className="text-4xl md:text-5xl lg:text-[54px] font-serif font-medium tracking-wider text-[#d4af37] drop-shadow-lg uppercase">
+          <h1 className="text-4xl md:text-5xl lg:text-[54px] font-serif font-black tracking-wide leading-tight text-white drop-shadow-lg uppercase">
             Guided Itineraries
           </h1>
           <p className="text-gray-100 text-sm md:text-[15px] leading-relaxed max-w-xl mx-auto font-medium drop-shadow">
@@ -230,15 +230,18 @@ export default function Itineraries() {
                 <Link
                   key={tpl._id}
                   to={`/itineraries/${tpl.slug}`}
-                  className="group bg-white rounded-[24px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 flex flex-row border border-gray-150 h-48"
+                  className="group bg-white rounded-[24px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 flex flex-row border border-gray-150 h-48 isolate [transform:translateZ(0)]"
                 >
                   {/* Left Column: Image Container */}
                   <div className="w-[40%] h-full relative overflow-hidden bg-gray-100 shrink-0">
                     <img
-                      src={tpl.coverImage || 'https://images.unsplash.com/photo-1539650116574-8efeb43e2750?auto=format&fit=crop&w=600&q=80'}
+                      src={tpl.imageCover || 'https://images.unsplash.com/photo-1539650116574-8efeb43e2750?auto=format&fit=crop&w=600&q=80'}
                       alt={tpl.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
+                    <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm shadow-md text-navy-900 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider border border-white/50 flex items-center gap-1.5">
+                      <span className="text-[#c1a249] text-xs">⏱</span> {tpl.duration} Days
+                    </div>
                   </div>
 
                   {/* Right Column: Content Details */}

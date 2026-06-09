@@ -26,6 +26,7 @@ export default function AdminItineraries() {
   const [notIncludesStr, setNotIncludesStr] = useState('');
   const [tipsStr, setTipsStr] = useState('');
   const [imageUploading, setImageUploading] = useState(false);
+  const [dayUploading, setDayUploading] = useState({});
   const [schedule, setSchedule] = useState([]);
 
   // For toggling day accordions in the UI
@@ -66,6 +67,30 @@ export default function AdminItineraries() {
     }
   };
 
+  const handleDayImageUpload = async (e, dayIdx) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setDayUploading(prev => ({ ...prev, [dayIdx]: true }));
+    setErrorMsg('');
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await adminAPI.uploadImage(formData);
+      const url = res.data?.data?.imageUrl || res.data?.imageUrl;
+      if (url) {
+        updateDay(dayIdx, 'image', url);
+      } else {
+        throw new Error('Image URL was not returned.');
+      }
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || err.message || 'Failed to upload image.');
+    } finally {
+      setDayUploading(prev => ({ ...prev, [dayIdx]: false }));
+    }
+  };
+
   const { data: itinerariesData, isLoading } = useQuery({
     queryKey: ['adminItineraries'],
     queryFn: () => itinerariesAPI.getTemplates(),
@@ -86,7 +111,7 @@ export default function AdminItineraries() {
 
   const addDay = () => {
     const newIdx = schedule.length;
-    setSchedule([...schedule, { day: newIdx + 1, description: '', hotel: '', meals: '', landmarks: [] }]);
+    setSchedule([...schedule, { day: newIdx + 1, description: '', image: '', hotel: '', meals: '', landmarks: [] }]);
     setExpandedDays(prev => ({ ...prev, [newIdx]: true }));
   };
 
@@ -233,6 +258,7 @@ export default function AdminItineraries() {
       ...d,
       meals: d.meals?.join(', ') || '',
       hotel: d.hotel?._id || d.hotel || '',
+      image: d.image || '',
       landmarks: d.landmarks?.map(lm => ({
         ...lm,
         landmark_id: lm.landmark_id?._id || lm.landmark_id || ''
@@ -274,6 +300,7 @@ export default function AdminItineraries() {
       schedule: schedule.map(d => ({
         day: d.day,
         description: d.description,
+        image: d.image,
         hotel: d.hotel || undefined,
         meals: typeof d.meals === 'string' ? d.meals.split(',').map(m => m.trim()).filter(Boolean) : d.meals,
         landmarks: d.landmarks.filter(lm => lm.landmark_id).map((lm, idx) => ({
@@ -551,6 +578,42 @@ export default function AdminItineraries() {
                                     onChange={(e) => updateDay(dIdx, 'description', e.target.value)}
                                     className="w-full p-2 border border-[#d9cbb2] rounded text-xs focus:ring-1 focus:ring-[#b89047] focus:outline-none"
                                   ></textarea>
+                                </div>
+                                <div className="sm:col-span-2">
+                                  <label className="block text-[10px] text-gray-500">Day Background Image</label>
+                                  <div className="mt-1 flex flex-col gap-2 border border-[#d9cbb2] rounded p-2 bg-[#fdfbf7]">
+                                    <div className="flex items-center gap-4">
+                                      <label className="bg-[#b89047] text-white px-3 py-1.5 rounded text-[10px] cursor-pointer hover:bg-[#a07c3c] transition-colors shadow-sm">
+                                        Upload Image
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          onChange={(e) => handleDayImageUpload(e, dIdx)}
+                                          className="hidden"
+                                        />
+                                      </label>
+                                      <span className="text-[10px] text-gray-500">
+                                        {dayUploading[dIdx] ? 'Uploading...' : day.image ? 'Image uploaded' : 'Optional day background'}
+                                      </span>
+                                      {dayUploading[dIdx] && <Loader2 className="animate-spin text-[#b89047] h-3 w-3" />}
+                                    </div>
+                                    {day.image && (
+                                      <div className="mt-2 relative inline-block">
+                                        <img
+                                          src={day.image}
+                                          alt={`Day ${day.day}`}
+                                          className="h-12 w-20 object-cover rounded shadow border border-[#d9cbb2]"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => updateDay(dIdx, 'image', '')}
+                                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 shadow-sm"
+                                        >
+                                          <Trash2 className="h-2.5 w-2.5" />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                                 <div>
                                   <label className="block text-[10px] text-gray-500">Overnight Hotel</label>
