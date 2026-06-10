@@ -293,55 +293,14 @@ export default function LandmarkDetails() {
 
   const bookLandmarkMutation = useMutation({
     mutationFn: (data) => bookingsAPI.bookLandmark(data),
-    onSuccess: () => {
-      setTicketStep(3);
-      setTicketSuccess(true);
-      queryClient.invalidateQueries({ queryKey: ['userBookings'] });
+    onSuccess: (res) => {
+      const booking = res.data.data?.booking || res.data.booking || res.data;
+      if (booking?._id || booking?.id) {
+        navigate(`/payment?bookingId=${booking._id || booking.id}`);
+      }
     },
     onError: (err) => {
-      console.warn("API booking failed, simulating ticket confirmation fallback:", err);
-
-      const simulatedBooking = {
-        _id: 'sim-' + Math.random().toString(36).substr(2, 9),
-        booking_type: 'landmark',
-        referenceModel: 'Landmark',
-        reference_id: landmarkId,
-        dates: {
-          start: ticketDate,
-          end: ticketDate,
-        },
-        guests: ticketQty,
-        totalPrice: landmark.ticketPrice * ticketQty,
-        status: 'confirmed',
-        snapshot: {
-          itemName: landmark.name,
-          itemPrice: landmark.ticketPrice,
-          itemDetails: {
-            category: landmark.category,
-            workingHours: landmark.workingHours,
-            address: landmark.address,
-          },
-        },
-        payment: {
-          method: 'stripe',
-          status: 'paid',
-          paidAt: new Date().toISOString(),
-        },
-        createdAt: new Date().toISOString(),
-      };
-
-      try {
-        const storageKey = (user?._id || user?.id) ? `kemet_simulated_bookings_${user._id || user.id}` : 'kemet_simulated_bookings';
-        const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
-        existing.push(simulatedBooking);
-        localStorage.setItem(storageKey, JSON.stringify(existing));
-      } catch (e) {
-        console.error("Failed to save simulated booking", e);
-      }
-
-      setTicketStep(3);
-      setTicketSuccess(true);
-      queryClient.invalidateQueries({ queryKey: ['userBookings'] });
+      alert(err.response?.data?.message || 'Failed to create booking.');
     }
   });
 
@@ -805,11 +764,26 @@ export default function LandmarkDetails() {
 
               <div className="pt-4 space-y-3">
                 <button 
-                  onClick={() => setShowTicketModal(true)}
-                  className="w-full bg-[#C1A249] hover:bg-[#b59546] text-white font-bold py-3.5 rounded-xl transition flex items-center justify-center space-x-2 shadow-sm"
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      navigate(`/auth?redirect=${encodeURIComponent(window.location.pathname)}`);
+                      return;
+                    }
+                    if (!ticketDate) {
+                      alert('Please select a date of visit.');
+                      return;
+                    }
+                    bookLandmarkMutation.mutate({
+                      landmark_id: landmarkId,
+                      dates: { start: ticketDate },
+                      guests: ticketQty,
+                    });
+                  }}
+                  disabled={bookLandmarkMutation.isPending}
+                  className="w-full bg-[#C1A249] hover:bg-[#b59546] text-white font-bold py-3.5 rounded-xl transition flex items-center justify-center space-x-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   <Calendar className="h-4 w-4" />
-                  <span>Book Tickets</span>
+                  <span>{bookLandmarkMutation.isPending ? 'Processing...' : 'Book Tickets'}</span>
                 </button>
               </div>
             </div>
@@ -845,393 +819,6 @@ export default function LandmarkDetails() {
               </div>
             )}
 
-          </div>
-        </div>
-      )}
-
-      {/* Book Entrance Ticket Dialog Modal */}
-      {showTicketModal && (
-        <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden border border-gold-500/20 shadow-2xl p-6 space-y-6">
-
-            <div className="flex justify-between items-start border-b border-gray-100 pb-3">
-              <div>
-                <h3 className="text-lg font-serif font-bold text-navy-900">
-                  {ticketStep === 1 && 'Entrance Tickets Checkout'}
-                  {ticketStep === 2 && 'Secure Ticket Payment'}
-                  {ticketStep === 3 && 'Entrance Pass Confirmed'}
-                </h3>
-                <p className="text-xs text-gray-500">
-                  {ticketStep === 1 && `Secure entry access pass for ${landmark.name}.`}
-                  {ticketStep === 2 && 'Review details and complete payment.'}
-                  {ticketStep === 3 && 'Present this QR ticket pass at the gate.'}
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setShowTicketModal(false);
-                  setTicketSuccess(false);
-                  setTicketStep(1);
-                  setPaymentLoading(false);
-                }}
-                className="text-gray-400 hover:text-gray-600 text-lg font-bold"
-              >
-                &times;
-              </button>
-            </div>
-
-            {/* STEP 1: SELECT TICKET QUANTITY & DATE */}
-            {ticketStep === 1 && (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (!landmark.ticketPrice || landmark.ticketPrice === 0) {
-                    setPaymentLoading(true);
-                    setTimeout(() => {
-                      setPaymentLoading(false);
-                      bookLandmarkMutation.mutate({
-                        landmark_id: landmarkId,
-                        dates: { start: ticketDate },
-                        guests: ticketQty,
-                      });
-                    }, 800);
-                  } else {
-                    setTicketStep(2);
-                  }
-                }}
-                className="space-y-4 text-xs"
-              >
-                <div className="space-y-1">
-                  <label className="block font-bold text-gray-500 uppercase tracking-wider">Date of Visit</label>
-                  <input
-                    type="date"
-                    required
-                    min={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]}
-                    value={ticketDate}
-                    onChange={(e) => setTicketDate(e.target.value)}
-                    className="w-full p-2.5 border border-gray-250 bg-gray-50/50 focus:ring-2 focus:ring-gold-500 focus:bg-white focus:outline-none rounded-xl font-semibold text-navy-900"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block font-bold text-gray-500 uppercase tracking-wider">Tickets Quantity</label>
-                  <select
-                    value={ticketQty}
-                    onChange={(e) => setTicketQty(Number(e.target.value))}
-                    className="w-full p-2.5 border border-gray-250 bg-gray-50/50 focus:outline-none rounded-xl font-bold text-navy-900 focus:ring-2 focus:ring-gold-500 focus:bg-white"
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                      <option key={n} value={n}>{n} Ticket{n > 1 ? 's' : ''}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center justify-between border-t border-gray-150 pt-4 mt-2">
-                  <span className="font-serif font-bold text-navy-900 text-xs">Total Tickets Price:</span>
-                  <span className="text-xl font-black text-gold-600">
-                    {!landmark.ticketPrice || landmark.ticketPrice === 0 ? 'Free' : `$${(landmark.ticketPrice * ticketQty).toFixed(0)}`}
-                  </span>
-                </div>
-
-                <div className="border-t border-gray-150 pt-4 flex justify-end space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowTicketModal(false);
-                      setTicketStep(1);
-                    }}
-                    className="px-4 py-2.5 border border-gray-200 rounded-xl font-bold text-gray-500 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={paymentLoading}
-                    className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-5 py-2.5 rounded-xl shadow flex items-center space-x-2"
-                  >
-                    {paymentLoading ? (
-                      <>
-                        <Compass className="h-4 w-4 animate-spin text-navy-900" />
-                        <span>Processing...</span>
-                      </>
-                    ) : (
-                      <span>{!landmark.ticketPrice || landmark.ticketPrice === 0 ? 'Get Free Pass' : 'Proceed to Payment'}</span>
-                    )}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* STEP 2: PAYMENT METHOD CHECKOUT */}
-            {ticketStep === 2 && (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setPaymentLoading(true);
-                  setTimeout(() => {
-                    setPaymentLoading(false);
-                    bookLandmarkMutation.mutate({
-                      landmark_id: landmarkId,
-                      dates: { start: ticketDate },
-                      guests: ticketQty,
-                    });
-                  }, 1500);
-                }}
-                className="space-y-4 text-xs"
-              >
-                {/* Order Summary */}
-                <div className="bg-sand-50/50 p-3.5 rounded-xl border border-gold-500/10 space-y-1.5">
-                  <div className="flex justify-between font-semibold text-gray-600">
-                    <span>Tickets (x{ticketQty})</span>
-                    <span>${(landmark.ticketPrice * ticketQty).toFixed(0)}</span>
-                  </div>
-                  <div className="flex justify-between font-semibold text-gray-600">
-                    <span>Date of Visit</span>
-                    <span>{ticketDate || 'N/A'}</span>
-                  </div>
-                </div>
-
-                {/* Tab Selectors */}
-                <div className="flex border-b border-gray-100 pb-2">
-                  {[
-                    { id: 'saved', label: 'Saved Methods' },
-                    { id: 'newCard', label: 'New Card' },
-                    { id: 'paypal', label: 'PayPal' }
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setActivePaymentTab(tab.id)}
-                      className={`flex-1 pb-2 text-center font-bold border-b-2 transition duration-200 ${activePaymentTab === tab.id
-                        ? 'border-gold-500 text-gold-600'
-                        : 'border-transparent text-gray-400 hover:text-gray-600'
-                        }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* SAVED PAYMENT METHODS */}
-                {activePaymentTab === 'saved' && (
-                  <div className="space-y-2">
-                    {user?.paymentMethods && user.paymentMethods.length > 0 ? (
-                      user.paymentMethods.map((method) => (
-                        <label
-                          key={method._id}
-                          className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition duration-200 ${selectedSavedMethod === method._id
-                            ? 'border-gold-500 bg-gold-500/5'
-                            : 'border-gray-250 hover:bg-gray-50'
-                            }`}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <input
-                              type="radio"
-                              name="savedMethod"
-                              checked={selectedSavedMethod === method._id}
-                              onChange={() => setSelectedSavedMethod(method._id)}
-                              className="text-gold-500 focus:ring-gold-500"
-                            />
-                            <div>
-                              <span className="font-bold text-navy-900 block">
-                                {method.methodType === 'card'
-                                  ? `${method.cardType || 'Card'} Ending in ${method.cardNumber?.slice(-4) || '****'}`
-                                  : 'Linked PayPal Account'}
-                              </span>
-                              <span className="text-[10px] text-gray-400">
-                                {method.methodType === 'card'
-                                  ? `Holder: ${method.cardholderName}`
-                                  : method.paypalEmail}
-                              </span>
-                            </div>
-                          </div>
-                          <span className="text-lg">{method.methodType === 'card' ? '💳' : '🅿️'}</span>
-                        </label>
-                      ))
-                    ) : (
-                      <div className="text-center py-6 text-gray-500 text-xs italic bg-gray-50 rounded-xl border border-gray-150">
-                        No saved payment methods found. Please add a new card or use PayPal.
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* NEW CREDIT CARD */}
-                {activePaymentTab === 'newCard' && (
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="block font-bold text-gray-500 uppercase tracking-wider">Cardholder Name</label>
-                      <input
-                        type="text"
-                        required={activePaymentTab === 'newCard'}
-                        placeholder="e.g. John Doe"
-                        className="w-full p-2.5 border border-gray-250 bg-gray-50/50 focus:ring-2 focus:ring-gold-500 focus:bg-white focus:outline-none rounded-xl font-semibold text-navy-900"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="block font-bold text-gray-500 uppercase tracking-wider">Card Number</label>
-                      <input
-                        type="text"
-                        required={activePaymentTab === 'newCard'}
-                        maxLength={19}
-                        placeholder="XXXX XXXX XXXX XXXX"
-                        className="w-full p-2.5 border border-gray-250 bg-gray-50/50 focus:ring-2 focus:ring-gold-500 focus:bg-white focus:outline-none rounded-xl font-semibold text-navy-900"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="block font-bold text-gray-500 uppercase tracking-wider">Expiry Date</label>
-                        <input
-                          type="text"
-                          required={activePaymentTab === 'newCard'}
-                          maxLength={5}
-                          placeholder="MM/YY"
-                          className="w-full p-2.5 border border-gray-250 bg-gray-50/50 focus:ring-2 focus:ring-gold-500 focus:bg-white focus:outline-none rounded-xl font-semibold text-navy-900 text-center"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="block font-bold text-gray-500 uppercase tracking-wider">CVV Code</label>
-                        <input
-                          type="password"
-                          required={activePaymentTab === 'newCard'}
-                          maxLength={3}
-                          placeholder="***"
-                          className="w-full p-2.5 border border-gray-250 bg-gray-50/50 focus:ring-2 focus:ring-gold-500 focus:bg-white focus:outline-none rounded-xl font-semibold text-navy-900 text-center"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* PAYPAL CHECKOUT */}
-                {activePaymentTab === 'paypal' && (
-                  <div className="space-y-3 text-center py-4">
-                    <p className="text-xs text-gray-500">You will be redirected to PayPal to complete authorization.</p>
-                    <div className="space-y-1 text-left">
-                      <label className="block font-bold text-gray-500 uppercase tracking-wider">PayPal Email Address</label>
-                      <input
-                        type="email"
-                        required={activePaymentTab === 'paypal'}
-                        placeholder="email@paypal.com"
-                        className="w-full p-2.5 border border-gray-250 bg-gray-50/50 focus:ring-2 focus:ring-gold-500 focus:bg-white focus:outline-none rounded-xl font-semibold text-navy-900"
-                      />
-                    </div>
-                    <div className="h-10 bg-[#FFC439] hover:bg-[#F2BA30] transition rounded-xl flex items-center justify-center font-bold text-navy-900 cursor-pointer select-none space-x-1.5 shadow-sm mt-3">
-                      <span>PayPal</span>
-                      <span className="font-serif italic text-blue-850">Checkout</span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="border-t border-gray-150 pt-4 flex justify-end space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => setTicketStep(1)}
-                    className="px-4 py-2.5 border border-gray-200 rounded-xl font-bold text-gray-500 hover:bg-gray-50"
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={paymentLoading}
-                    className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-5 py-2.5 rounded-xl shadow flex items-center justify-center space-x-2"
-                  >
-                    {paymentLoading ? (
-                      <>
-                        <Compass className="h-4 w-4 animate-spin text-navy-900" />
-                        <span>Processing payment...</span>
-                      </>
-                    ) : (
-                      <span>Pay ${(landmark.ticketPrice * ticketQty).toFixed(0)}</span>
-                    )}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* STEP 3: QR CODE & DIGITAL RECEIPT TICKET */}
-            {ticketStep === 3 && (
-              <div className="space-y-5 text-center py-2">
-                <div className="h-10 w-10 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto text-xl shadow shadow-green-500/30">
-                  <Check className="h-5 w-5 stroke-[3]" />
-                </div>
-
-                <div className="space-y-1">
-                  <h4 className="font-serif font-black text-navy-900 text-base">Admission Ticket Confirmed</h4>
-                  <p className="text-[10px] text-gray-400">Scan this digital pass at the entrance scanner.</p>
-                </div>
-
-                {/* Digital Ticket Pass Design */}
-                <div className="bg-sand-50/40 border border-gold-500/20 rounded-2xl p-4 space-y-4 max-w-xs mx-auto shadow-sm">
-                  {/* Mock QR code vector SVG styled with Ancient Egyptian vibes */}
-                  <div className="bg-gradient-to-br from-navy-900 to-black p-4 rounded-3xl border-2 border-gold-500 shadow-xl w-fit mx-auto relative overflow-hidden">
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gold-500/10 via-transparent to-transparent pointer-events-none"></div>
-                    <svg className="w-40 h-40 mx-auto" viewBox="0 0 29 29" shapeRendering="crispEdges">
-                      <defs>
-                        <linearGradient id="egyptianGold" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#faf4df" />
-                          <stop offset="50%" stopColor="#C9A84C" />
-                          <stop offset="100%" stopColor="#8e7030" />
-                        </linearGradient>
-                        <linearGradient id="lapisBlue" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#6072a3" />
-                          <stop offset="100%" stopColor="#0D1B2A" />
-                        </linearGradient>
-                      </defs>
-                      {/* Background board */}
-                      <rect width="29" height="29" fill="url(#lapisBlue)" rx="2" />
-                      {/* QR code matrix colored in Egyptian Gold */}
-                      <path fill="url(#egyptianGold)" d="M0 0h7v7H0zm22 0h7v7h-7zM0 22h7v7H0zm9 0h1v1h-1zm1 1h1v1h-1zm-1 1h1v1h-1zm2 1h1v1h-1zm1-2h1v1h-1zm1 3h1v1h-1zm2-3h1v1h-1zm-1-1h1v1h-1zm3 0h1v1h-1zm1 1h1v1h-1zm1-1h1v1h-1zm1 2h1v1h-1zm-4 2h1v1h-1zm3 0h1v1h-1zm1 1h1v1h-1zm-9-5h1v1h-1zm2 0h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm1 0h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm-10 1h1v1h-1zm4 0h1v1h-1zm3 0h1v1h-1zm-8 1h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm2 0h1v1h-1zm1 0h1v1h-1zm-7 1h1v1h-1zm2 0h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm-5 1h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm2 0h1v1h-1zm1 0h1v1h-1zm1 0h1v1h-1zm-10 1h1v1h-1zm2 0h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm1 0h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm-15-7h1v1h-1zm0 2h1v1H8zm1 1h1v1H9zm1-2h1v1h-1zm2 0h1v1h-1zm-2 2h1v1h-1zm4-1h1v1h-1zm2-1h1v1h-1zm0 2h1v1h-1zm-7-5h1v1h-1zm2 0h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm1 0h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm-12 1h1v1h-1zm4 0h1v1h-1zm3 0h1v1h-1zm-5 1h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm2 0h1v1h-1zm1 0h1v1h-1zm-4 1h1v1h-1zm2 0h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm-5 1h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm2 0h1v1h-1zm1 0h1v1h-1zm1 0h1v1h-1zM2 2h3v3H2zm20 0h3v3h-3zM2 24h3v3H2z" />
-                      {/* Nested details - Gold inner positioning marks */}
-                      <rect x="2.5" y="2.5" width="2" height="2" fill="#faf4df" />
-                      <rect x="24.5" y="2.5" width="2" height="2" fill="#faf4df" />
-                      <rect x="2.5" y="24.5" width="2" height="2" fill="#faf4df" />
-                      {/* Egyptian Ankh Symbol vector right at the center */}
-                      <g transform="translate(11, 11)" fill="url(#egyptianGold)">
-                        {/* Circle head */}
-                        <path d="M 3.5 1 A 1.5 1.5 0 1 0 3.5 4 A 1.5 1.5 0 1 0 3.5 1 Z M 3.5 0.25 A 2.25 2.25 0 1 1 3.5 4.75 A 2.25 2.25 0 1 1 3.5 0.25 Z" />
-                        {/* Horizontal bar */}
-                        <rect x="1.5" y="4.5" width="4" height="0.75" rx="0.2" />
-                        {/* Vertical leg */}
-                        <rect x="3.1" y="5.25" width="0.8" height="2" rx="0.1" />
-                      </g>
-                    </svg>
-                  </div>
-
-                  <div className="border-t border-dashed border-gold-500/20 pt-3 space-y-1 text-left text-[11px]">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400 font-semibold">Pass:</span>
-                      <span className="font-bold text-navy-900">{landmark.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400 font-semibold">Visit Date:</span>
-                      <span className="font-bold text-navy-900">{ticketDate}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400 font-semibold">Qty:</span>
-                      <span className="font-bold text-navy-900">{ticketQty} Ticket{ticketQty > 1 ? 's' : ''}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-gray-150 pt-1.5 mt-1">
-                      <span className="text-gray-400 font-bold">Paid:</span>
-                      <span className="font-bold text-gold-600">${(landmark.ticketPrice * ticketQty).toFixed(0)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setShowTicketModal(false);
-                    setTicketSuccess(false);
-                    setTicketStep(1);
-                  }}
-                  className="bg-navy-900 hover:bg-navy-800 text-white font-bold px-8 py-3 rounded-xl text-xs uppercase tracking-wider shadow"
-                >
-                  Close Pass
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}
