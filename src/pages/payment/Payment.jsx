@@ -144,32 +144,7 @@ export default function Payment() {
     setPayError(msg || 'Payment failed. Try again.');
   };
 
-  const handleSavedMethodPay = async (e) => {
-    e.preventDefault();
-    setPayError('');
-    setProcessing(true);
 
-    try {
-      await paymentAPI.captureOrder({ booking_id: bookingId });
-      handlePaySuccess();
-    } catch (err) {
-      handlePayError(err.response?.data?.message || 'Payment capture failed');
-    }
-  };
-
-  const handlePaypalPay = async (e) => {
-    e.preventDefault();
-    setPayError('');
-    setProcessing(true);
-
-    try {
-      await paymentAPI.createPaypalOrder({ amount: bookingPrice, booking_id: bookingId });
-      await paymentAPI.captureOrder({ booking_id: bookingId });
-      handlePaySuccess();
-    } catch (err) {
-      handlePayError(err.response?.data?.message || 'PayPal payment failed');
-    }
-  };
 
   if (isLoading) {
     return (
@@ -239,10 +214,6 @@ export default function Payment() {
               <div className="flex border border-gray-200 rounded-lg overflow-hidden text-xs">
                 {[
                   { id: 'card', label: 'Pay with Card', icon: CreditCard },
-                  ...(user?.paymentMethods?.length > 0
-                    ? [{ id: 'saved', label: 'Saved Methods', icon: Wallet }]
-                    : []),
-                  { id: 'paypal', label: 'PayPal', icon: Wallet },
                 ].map((tab) => {
                   const TabIcon = tab.icon;
                   return (
@@ -279,72 +250,7 @@ export default function Payment() {
                 </Elements>
               )}
 
-              {paymentMethod === 'saved' && (
-                <form onSubmit={handleSavedMethodPay} className="space-y-4">
-                  <div className="space-y-2">
-                    {user.paymentMethods.map((method, idx) => {
-                      const methodId = method._id || String(idx);
-                      const isCard = method.methodType === 'card';
-                      const title = isCard
-                        ? `${method.cardType || 'Card'} ending in ${String(method.cardNumber || '').slice(-4)}`
-                        : 'PayPal Account';
-                      const subtitle = isCard
-                        ? `Holder: ${method.cardholderName}  •  Exp: ${method.expiryDate}`
-                        : method.paypalEmail;
 
-                      return (
-                        <div
-                          key={methodId}
-                          className="flex items-center justify-between p-3 rounded-xl border border-gray-200"
-                        >
-                          <div className="flex items-center space-x-3 text-xs">
-                            <CreditCard className={`h-5 w-5 ${isCard ? 'text-blue-400' : 'text-blue-600'}`} />
-                            <div>
-                              <span className="font-bold text-navy-900 block">{title}</span>
-                              <span className="text-[10px] text-gray-400">{subtitle}</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={processing}
-                    className="w-full mt-4 bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold py-3.5 px-4 rounded-lg shadow-lg hover:shadow-gold-500/20 transition duration-200 text-xs flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {processing ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin text-navy-900" />
-                        <span>Processing Secure Charge...</span>
-                      </>
-                    ) : (
-                      <span>Authorize Secure Charge (${bookingPrice})</span>
-                    )}
-                  </button>
-                </form>
-              )}
-
-              {paymentMethod === 'paypal' && (
-                <div className="text-center py-6 space-y-4">
-                  <p className="text-xs text-gray-600">Click the button below to authorize payment through your PayPal Account.</p>
-                  <button
-                    onClick={handlePaypalPay}
-                    disabled={processing}
-                    className="inline-flex items-center space-x-2 bg-yellow-400 hover:bg-yellow-500 text-navy-900 font-bold py-3 px-8 rounded-lg shadow-md transition duration-200 text-xs"
-                  >
-                    {processing ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Connecting to PayPal...</span>
-                      </>
-                    ) : (
-                      <span>Pay with PayPal</span>
-                    )}
-                  </button>
-                </div>
-              )}
 
               <div className="flex items-center justify-center space-x-2 text-[10px] text-gray-400 pt-4 border-t border-gray-100">
                 <Lock className="h-3.5 w-3.5 text-gold-500 shrink-0" />
