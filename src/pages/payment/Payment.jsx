@@ -4,7 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { bookingsAPI, paymentAPI } from '../../api/endpoints';
-import { CreditCard, Shield, Lock, Wallet, AlertCircle, Compass, ArrowLeft, Loader2 } from 'lucide-react';
+import { CreditCard, Shield, Lock, Wallet, AlertCircle, Compass, ArrowLeft, Loader2, CheckCircle, Calendar, Home, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../../store/authStore';
 
@@ -123,6 +123,7 @@ export default function Payment() {
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [processing, setProcessing] = useState(false);
   const [payError, setPayError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const { data: bookingData, isLoading, error } = useQuery({
     queryKey: ['booking', bookingId],
@@ -136,7 +137,7 @@ export default function Payment() {
 
   const handlePaySuccess = () => {
     setProcessing(false);
-    navigate('/payment/success');
+    setShowSuccessModal(true);
   };
 
   const handlePayError = (msg) => {
@@ -144,7 +145,32 @@ export default function Payment() {
     setPayError(msg || 'Payment failed. Try again.');
   };
 
+  const handleSavedMethodPay = async (e) => {
+    e.preventDefault();
+    setPayError('');
+    setProcessing(true);
 
+    try {
+      await paymentAPI.captureOrder({ booking_id: bookingId });
+      handlePaySuccess();
+    } catch (err) {
+      handlePayError(err.response?.data?.message || 'Payment capture failed');
+    }
+  };
+
+  const handlePaypalPay = async (e) => {
+    e.preventDefault();
+    setPayError('');
+    setProcessing(true);
+
+    try {
+      await paymentAPI.createPaypalOrder({ amount: bookingPrice, booking_id: bookingId });
+      await paymentAPI.captureOrder({ booking_id: bookingId });
+      handlePaySuccess();
+    } catch (err) {
+      handlePayError(err.response?.data?.message || 'PayPal payment failed');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -214,6 +240,10 @@ export default function Payment() {
               <div className="flex border border-gray-200 rounded-lg overflow-hidden text-xs">
                 {[
                   { id: 'card', label: 'Pay with Card', icon: CreditCard },
+                  ...(user?.paymentMethods?.length > 0
+                    ? [{ id: 'saved', label: 'Saved Methods', icon: Wallet }]
+                    : []),
+                  { id: 'paypal', label: 'PayPal', icon: Wallet },
                 ].map((tab) => {
                   const TabIcon = tab.icon;
                   return (
@@ -250,7 +280,72 @@ export default function Payment() {
                 </Elements>
               )}
 
+              {paymentMethod === 'saved' && (
+                <form onSubmit={handleSavedMethodPay} className="space-y-4">
+                  <div className="space-y-2">
+                    {user.paymentMethods.map((method, idx) => {
+                      const methodId = method._id || String(idx);
+                      const isCard = method.methodType === 'card';
+                      const title = isCard
+                        ? `${method.cardType || 'Card'} ending in ${String(method.cardNumber || '').slice(-4)}`
+                        : 'PayPal Account';
+                      const subtitle = isCard
+                        ? `Holder: ${method.cardholderName}  •  Exp: ${method.expiryDate}`
+                        : method.paypalEmail;
 
+                      return (
+                        <div
+                          key={methodId}
+                          className="flex items-center justify-between p-3 rounded-xl border border-gray-200"
+                        >
+                          <div className="flex items-center space-x-3 text-xs">
+                            <CreditCard className={`h-5 w-5 ${isCard ? 'text-blue-400' : 'text-blue-600'}`} />
+                            <div>
+                              <span className="font-bold text-navy-900 block">{title}</span>
+                              <span className="text-[10px] text-gray-400">{subtitle}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={processing}
+                    className="w-full mt-4 bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold py-3.5 px-4 rounded-lg shadow-lg hover:shadow-gold-500/20 transition duration-200 text-xs flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {processing ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin text-navy-900" />
+                        <span>Processing Secure Charge...</span>
+                      </>
+                    ) : (
+                      <span>Authorize Secure Charge (${bookingPrice})</span>
+                    )}
+                  </button>
+                </form>
+              )}
+
+              {paymentMethod === 'paypal' && (
+                <div className="text-center py-6 space-y-4">
+                  <p className="text-xs text-gray-600">Click the button below to authorize payment through your PayPal Account.</p>
+                  <button
+                    onClick={handlePaypalPay}
+                    disabled={processing}
+                    className="inline-flex items-center space-x-2 bg-yellow-400 hover:bg-yellow-500 text-navy-900 font-bold py-3 px-8 rounded-lg shadow-md transition duration-200 text-xs"
+                  >
+                    {processing ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Connecting to PayPal...</span>
+                      </>
+                    ) : (
+                      <span>Pay with PayPal</span>
+                    )}
+                  </button>
+                </div>
+              )}
 
               <div className="flex items-center justify-center space-x-2 text-[10px] text-gray-400 pt-4 border-t border-gray-100">
                 <Lock className="h-3.5 w-3.5 text-gold-500 shrink-0" />
@@ -292,6 +387,54 @@ export default function Payment() {
           </div>
         </div>
       </div>
+
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="max-w-md w-full text-center bg-white p-8 rounded-2xl shadow-xl border border-gold-500/15 space-y-6"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+              className="inline-block"
+            >
+              <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+            </motion.div>
+
+            <div className="space-y-2">
+              <h1 className="text-3xl font-serif font-black text-navy-500 tracking-wider">PAYMENT CONFIRMED</h1>
+              <p className="text-sm text-gray-500">
+                Thank you! Your Egyptian booking has been processed successfully and is now confirmed.
+              </p>
+            </div>
+
+            <div className="bg-sand-50 p-4 rounded-xl border border-gold-500/10 text-xs text-gray-600 leading-relaxed">
+              An email receipt containing check-in guides, tickets, and voucher files has been dispatched to your registered address.
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+              <Link
+                to="/dashboard"
+                className="flex items-center justify-center space-x-1.5 bg-navy-500 hover:bg-navy-600 text-white font-bold py-3 px-6 rounded-lg text-xs shadow-md transition"
+              >
+                <Calendar className="h-4 w-4 text-gold-500" />
+                <span>Go to My Bookings</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link
+                to="/"
+                className="flex items-center justify-center space-x-1.5 bg-gray-100 hover:bg-gray-200 text-navy-900 font-bold py-3 px-6 rounded-lg text-xs transition"
+              >
+                <Home className="h-4 w-4" />
+                <span>Home</span>
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
