@@ -4,8 +4,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from 'react-i18next';
 import { Menu, X, Compass, User, LogOut, LayoutDashboard, Heart, ShieldCheck, Sun, Moon, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+import { API_BASE } from '../../api/endpoints';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);

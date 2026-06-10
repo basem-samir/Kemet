@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { User, Mail, Globe, Phone, Tag, Check, Loader2, AlertCircle, CheckCircle, Trash2, ShieldAlert, CreditCard, Lock, Wallet, Camera, ImagePlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+import { API_BASE } from '../../api/endpoints';
 
 export default function Profile() {
   const navigate = useNavigate();

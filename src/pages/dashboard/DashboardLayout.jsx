@@ -1,6 +1,7 @@
 import { NavLink, Outlet, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { LayoutDashboard, Calendar, Heart, User, Compass } from 'lucide-react';
+import { API_BASE } from '../../api/endpoints';
 
 const sidebarLinks = [
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, end: true },
@@ -33,7 +34,7 @@ export default function DashboardLayout() {
           <div className="flex items-center space-x-3 pb-6 border-b border-gray-100">
             {user?.avatar ? (
               <img
-                src={user.avatar.startsWith('http') ? user.avatar : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}/${user.avatar}`}
+                src={user.avatar.startsWith('http') ? user.avatar : `${API_BASE}/${user.avatar}`}
                 alt={user?.full_name}
                 className="h-10 w-10 rounded-full object-cover border-2 border-gold-400 shadow-sm"
               />

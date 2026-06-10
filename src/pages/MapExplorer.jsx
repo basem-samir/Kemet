@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Compass, X } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { API_URL } from '../api/endpoints';
 
 const REGIONS = [
   { id: 'cairo', name: 'القاهرة', nameEn: 'Cairo', lat: 30.0444, lng: 31.2357, zoom: 11, bbox: [[29.9, 31.1], [30.2, 31.4]] },
@@ -174,7 +174,7 @@ export default function MapExplorer() {
       if (slug === 'matrouh') slug = 'marsa-matruh';
       if (slug === 'assiut') slug = 'asyut';
 
-      const response = await fetch(`${API_BASE}/governorates/${slug}`);
+      const response = await fetch(`${API_URL}/governorates/${slug}`);
       if (!response.ok) throw new Error('API failed');
       const json = await response.json();
       

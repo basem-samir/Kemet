@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Compass, Mail, Lock, User, Globe, Phone, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { API_BASE } from '../api/endpoints';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -36,7 +37,7 @@ export default function Auth() {
   };
 
   const handleGoogleAuth = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    window.location.href = `${API_BASE}/api/auth/google`;
   };
 
   const handleSubmit = async (e) => {
