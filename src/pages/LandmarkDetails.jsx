@@ -61,7 +61,7 @@ export default function LandmarkDetails() {
       const [lng, lat] = landmark.location.coordinates;
       const initMap = async () => {
         const L = await import('leaflet');
-        
+
         // Inject Leaflet CSS if not loaded
         if (!document.getElementById('leaflet-css-cdn')) {
           const link = document.createElement('link');
@@ -111,7 +111,7 @@ export default function LandmarkDetails() {
 
         L.marker([lat, lng], { icon: pinIcon }).addTo(mapInstance);
       };
-      
+
       initMap();
     }
 
@@ -191,6 +191,7 @@ export default function LandmarkDetails() {
   const canReview = (() => {
     if (!isAuthenticated) return false;
     if (user?.role === 'admin') return true;
+    if (!Number(landmark?.ticketPrice)) return true;
 
     const now = new Date();
     const year = now.getFullYear();
@@ -364,16 +365,16 @@ export default function LandmarkDetails() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF2] pb-24 font-sans text-navy-900">
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
+
         {/* Left Column */}
         <div className="lg:col-span-8 space-y-6">
-          
+
           {/* Main Image with Share/Favorite */}
           <div className="relative rounded-3xl overflow-hidden h-[55vh] bg-gray-200 shadow-sm border border-gray-100">
-            <img 
-              src={imagesList[activeImageIndex || 0] || 'https://images.unsplash.com/photo-1539650116574-8efeb43e2750?auto=format&fit=crop&w=1920&q=80'} 
+            <img
+              src={imagesList[activeImageIndex || 0] || 'https://images.unsplash.com/photo-1539650116574-8efeb43e2750?auto=format&fit=crop&w=1920&q=80'}
               alt={landmark.name}
               className="w-full h-full object-cover"
             />
@@ -381,7 +382,7 @@ export default function LandmarkDetails() {
               <button className="bg-white rounded-full p-2.5 shadow-md hover:bg-gray-50 transition text-gray-700">
                 <Share2 className="h-5 w-5" />
               </button>
-              <button 
+              <button
                 onClick={() => {
                   if (!isAuthenticated) navigate('/auth');
                   else toggleFavoriteMutation.mutate();
@@ -400,9 +401,8 @@ export default function LandmarkDetails() {
                 <button
                   key={idx}
                   onClick={() => setActiveImageIndex(idx)}
-                  className={`flex-shrink-0 h-24 w-36 rounded-2xl overflow-hidden border-2 transition-all ${
-                    (activeImageIndex || 0) === idx ? 'border-[#C1A249] shadow-sm' : 'border-transparent hover:opacity-90'
-                  }`}
+                  className={`flex-shrink-0 h-24 w-36 rounded-2xl overflow-hidden border-2 transition-all ${(activeImageIndex || 0) === idx ? 'border-[#C1A249] shadow-sm' : 'border-transparent hover:opacity-90'
+                    }`}
                 >
                   <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
                 </button>
@@ -466,8 +466,8 @@ export default function LandmarkDetails() {
           {/* Location Map */}
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 space-y-4">
             <h3 className="text-xl font-serif font-bold text-navy-900 pb-2 border-b border-gray-100">Location Map</h3>
-            <div 
-              ref={mapContainerRef} 
+            <div
+              ref={mapContainerRef}
               className="w-full h-80 rounded-2xl overflow-hidden border border-gray-100 shadow-inner z-10 relative"
             />
           </div>
@@ -477,7 +477,7 @@ export default function LandmarkDetails() {
             <h3 className="text-xl font-serif font-bold text-navy-900 pb-2">
               Reviews ({totalReviewCount})
             </h3>
-            
+
             {/* Write a review */}
             {isAuthenticated ? (
               userReview ? (
@@ -682,16 +682,16 @@ export default function LandmarkDetails() {
                 </Link>
               </div>
             )}
-            
+
             <div className="space-y-6">
               {reviews.length > 0 ? reviews.map(r => (
                 <div key={r._id} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden shrink-0">
-                        <img 
-                          src={r.user_id?.avatar || `https://ui-avatars.com/api/?name=${r.user_id?.full_name || 'User'}&background=random`} 
-                          alt={`${r.user_id?.full_name || 'User'}'s avatar`} 
+                        <img
+                          src={r.user_id?.avatar || `https://ui-avatars.com/api/?name=${r.user_id?.full_name || 'User'}&background=random`}
+                          alt={`${r.user_id?.full_name || 'User'}'s avatar`}
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -722,30 +722,47 @@ export default function LandmarkDetails() {
 
         {/* Right Column */}
         <div className="lg:col-span-4 space-y-6">
-          
+
           {/* Booking Widget */}
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 space-y-6 sticky top-24">
             <h3 className="text-xl font-serif font-bold text-navy-900">Book Your Visit</h3>
-            
-            <div className="space-y-4">
+
+            {Number(landmark.ticketPrice) > 0 ? (
+            <form 
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!isAuthenticated) {
+                  navigate(`/auth?redirect=${encodeURIComponent(window.location.pathname)}`);
+                  return;
+                }
+                bookLandmarkMutation.mutate({
+                  landmark_id: landmarkId,
+                  dates: { start: ticketDate },
+                  guests: ticketQty,
+                });
+              }}
+            >
               <div>
                 <label className="block text-xs font-bold text-navy-900 mb-2">Date</label>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
+                  required
+                  min={new Date().toISOString().split('T')[0]}
                   value={ticketDate}
                   onChange={(e) => setTicketDate(e.target.value)}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#C1A249] focus:outline-none"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-xs font-bold text-navy-900 mb-2">Number of Visitors</label>
-                <select 
+                <select
                   value={ticketQty}
                   onChange={(e) => setTicketQty(Number(e.target.value))}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#C1A249] focus:outline-none appearance-none bg-white"
                 >
-                  {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
                     <option key={n} value={n}>{n} person{n > 1 ? 's' : ''}</option>
                   ))}
                 </select>
@@ -763,22 +780,8 @@ export default function LandmarkDetails() {
               </div>
 
               <div className="pt-4 space-y-3">
-                <button 
-                  onClick={() => {
-                    if (!isAuthenticated) {
-                      navigate(`/auth?redirect=${encodeURIComponent(window.location.pathname)}`);
-                      return;
-                    }
-                    if (!ticketDate) {
-                      alert('Please select a date of visit.');
-                      return;
-                    }
-                    bookLandmarkMutation.mutate({
-                      landmark_id: landmarkId,
-                      dates: { start: ticketDate },
-                      guests: ticketQty,
-                    });
-                  }}
+                <button
+                  type="submit"
                   disabled={bookLandmarkMutation.isPending}
                   className="w-full bg-[#C1A249] hover:bg-[#b59546] text-white font-bold py-3.5 rounded-xl transition flex items-center justify-center space-x-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
                 >
@@ -786,7 +789,16 @@ export default function LandmarkDetails() {
                   <span>{bookLandmarkMutation.isPending ? 'Processing...' : 'Book Tickets'}</span>
                 </button>
               </div>
-            </div>
+            </form>
+            ) : (
+              <div className="bg-green-50/50 p-6 rounded-2xl border border-green-100 text-center space-y-2">
+                <div className="bg-white inline-block p-3 rounded-full shadow-sm mb-2">
+                  <Tag className="h-6 w-6 text-green-500" />
+                </div>
+                <h4 className="font-serif font-bold text-navy-900 text-lg">Free Entry</h4>
+                <p className="text-sm text-gray-600 font-medium">This landmark is free to visit. No booking is required!</p>
+              </div>
+            )}
           </div>
 
         </div>
