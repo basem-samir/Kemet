@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useRef } from 'react';
 import { landmarksAPI, reviewsAPI, favoritesAPI, itinerariesAPI, bookingsAPI } from '../api/endpoints';
 import { useAuthStore } from '../store/authStore';
-import { MapPin, Clock, Tag, Star, ArrowLeft, Heart, MessageSquare, AlertCircle, Calendar, ExternalLink, Compass, ShieldAlert, Check, X, ChevronLeft, ChevronRight, Phone, Globe, Share2 } from 'lucide-react';
+import { MapPin, Clock, Tag, Star, ArrowLeft, Heart, MessageSquare, AlertCircle, Calendar, ExternalLink, Compass, ShieldAlert, Check, X, ChevronLeft, ChevronRight, Phone, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function LandmarkDetails() {
@@ -379,9 +379,7 @@ export default function LandmarkDetails() {
               className="w-full h-full object-cover"
             />
             <div className="absolute top-4 right-4 flex space-x-3">
-              <button className="bg-white rounded-full p-2.5 shadow-md hover:bg-gray-50 transition text-gray-700">
-                <Share2 className="h-5 w-5" />
-              </button>
+
               <button
                 onClick={() => {
                   if (!isAuthenticated) navigate('/auth');
