@@ -15,10 +15,12 @@ export default function Profile() {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState(null);
+  const [pendingAvatarUrl, setPendingAvatarUrl] = useState(null);
   const fileInputRef = useRef(null);
   const [toast, setToast] = useState(null); // { message: string, type: 'success' | 'error' | 'info' }
 
-  const handleAvatarChange = async (e) => {
+  const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -37,14 +39,23 @@ export default function Profile() {
       return;
     }
 
+    setPendingAvatarFile(file);
+    setPendingAvatarUrl(URL.createObjectURL(file));
+  };
+
+  const confirmAvatarUpload = async () => {
+    if (!pendingAvatarFile) return;
+
     setAvatarUploading(true);
     setSuccessMsg('');
     setErrorMsg('');
 
     try {
-      await uploadAvatar(file);
+      await uploadAvatar(pendingAvatarFile);
       setSuccessMsg('Profile photo updated successfully!');
       setTimeout(() => setSuccessMsg(''), 4000);
+      setPendingAvatarFile(null);
+      setPendingAvatarUrl(null);
     } catch (err) {
       setErrorMsg(err.message || 'Failed to upload avatar.');
     } finally {
@@ -52,6 +63,12 @@ export default function Profile() {
       // Reset input so re-selecting the same file still triggers onChange
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const cancelAvatarUpload = () => {
+    setPendingAvatarFile(null);
+    setPendingAvatarUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
 
@@ -141,7 +158,13 @@ export default function Profile() {
           {/* Avatar with upload overlay */}
           <div className="relative group">
             <div className="h-28 w-28 rounded-full ring-4 ring-gold-500/40 ring-offset-4 ring-offset-navy-900 shadow-2xl overflow-hidden bg-gradient-to-br from-gold-400 to-gold-600">
-              {user?.avatar ? (
+              {pendingAvatarUrl ? (
+                <img
+                  src={pendingAvatarUrl}
+                  alt="Preview"
+                  className="h-full w-full object-cover"
+                />
+              ) : user?.avatar ? (
                 <img
                   src={user.avatar.startsWith('http') ? user.avatar : `${API_BASE}/${user.avatar}`}
                   alt={user?.full_name}
@@ -190,37 +213,54 @@ export default function Profile() {
           {/* User info */}
           <div className="text-center sm:text-left flex-1 space-y-2 pt-1">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <h2 className="text-2xl font-serif font-black text-white tracking-wide">
+              <h2 className="text-2xl font-serif font-black !text-white tracking-wide">
                 {user?.full_name || 'Traveler'}
               </h2>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest bg-gold-500/20 text-gold-400 border border-gold-500/30 w-fit mx-auto sm:mx-0">
                 {user?.role === 'admin' ? '⚡ Admin' : '🏛️ Explorer'}
               </span>
             </div>
-            <p className="text-xs text-gray-400">{user?.email}</p>
-            <p className="text-[10px] text-gray-500">
+            <p className="text-xs text-gold-500">{user?.email}</p>
+            <p className="text-[10px] text-gold-500">
               Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'recently'}
             </p>
 
             {/* Quick action button */}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={avatarUploading}
-              className="mt-3 inline-flex items-center space-x-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white text-[10px] font-bold uppercase tracking-wider px-4 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
-            >
-              {avatarUploading ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>Uploading...</span>
-                </>
-              ) : (
-                <>
-                  <ImagePlus className="h-3.5 w-3.5" />
-                  <span>Update Photo</span>
-                </>
-              )}
-            </button>
+            {pendingAvatarFile ? (
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={confirmAvatarUpload}
+                  disabled={avatarUploading}
+                  className="inline-flex items-center space-x-1.5 bg-green-500 hover:bg-green-600 border border-green-400 text-white text-[10px] font-bold uppercase tracking-wider px-4 py-2 rounded-lg transition-all duration-200 shadow-lg"
+                >
+                  {avatarUploading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Check className="h-3.5 w-3.5" />
+                  )}
+                  <span>{avatarUploading ? 'Uploading...' : 'Confirm'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelAvatarUpload}
+                  disabled={avatarUploading}
+                  className="inline-flex items-center space-x-1.5 bg-red-500 hover:bg-red-600 border border-red-400 text-white text-[10px] font-bold uppercase tracking-wider px-4 py-2 rounded-lg transition-all duration-200 shadow-lg"
+                >
+                  <span>Cancel</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={avatarUploading}
+                className="mt-3 inline-flex items-center space-x-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white text-[10px] font-bold uppercase tracking-wider px-4 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
+              >
+                <ImagePlus className="h-3.5 w-3.5" />
+                <span>Update Photo</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
