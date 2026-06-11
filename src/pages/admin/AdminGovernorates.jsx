@@ -19,7 +19,8 @@ export default function AdminGovernorates() {
   const [description, setDescription] = useState('');
   const [coverImage, setCoverImage] = useState('');
   const [capital, setCapital] = useState('');
-  const [bestTimeToVisit, setBestTimeToVisit] = useState('');
+  const [startMonth, setStartMonth] = useState('Oct');
+  const [endMonth, setEndMonth] = useState('Apr');
   const [population, setPopulation] = useState('');
   const [famousFor, setFamousFor] = useState('');
 
@@ -114,7 +115,8 @@ export default function AdminGovernorates() {
     setDescription('');
     setCoverImage('');
     setCapital('');
-    setBestTimeToVisit('');
+    setStartMonth('Oct');
+    setEndMonth('Apr');
     setPopulation('');
     setFamousFor('');
     setShowAddForm(false);
@@ -128,7 +130,19 @@ export default function AdminGovernorates() {
     setDescription(gov.description);
     setCoverImage(gov.coverImage);
     setCapital(gov.capital || '');
-    setBestTimeToVisit(gov.bestTimeToVisit || '');
+    if (gov.bestTimeToVisit) {
+      const parts = gov.bestTimeToVisit.split('-');
+      if (parts.length === 2) {
+        setStartMonth(parts[0].trim());
+        setEndMonth(parts[1].trim());
+      } else {
+        setStartMonth('Oct');
+        setEndMonth('Apr');
+      }
+    } else {
+      setStartMonth('Oct');
+      setEndMonth('Apr');
+    }
     setPopulation(gov.population || '');
     setFamousFor(gov.famousFor || '');
     setShowAddForm(true);
@@ -143,13 +157,40 @@ export default function AdminGovernorates() {
       return;
     }
 
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    const slugRegex = /^[a-z0-9-]+$/;
+    const capitalRegex = /^[a-zA-Z\s]*$/;
+    const popRegex = /^[a-zA-Z0-9\s,\.-]*$/;
+    const famousRegex = /^[a-zA-Z0-9\s,-]*$/;
+
+    if (!nameRegex.test(name)) {
+      setErrorMsg('Governorate Name can only contain English letters and spaces.');
+      return;
+    }
+    if (!slugRegex.test(slug)) {
+      setErrorMsg('Slug can only contain lowercase letters, numbers, and hyphens.');
+      return;
+    }
+    if (capital && !capitalRegex.test(capital)) {
+      setErrorMsg('Capital City can only contain English letters and spaces.');
+      return;
+    }
+    if (population && !popRegex.test(population)) {
+      setErrorMsg('Population can only contain letters, numbers, spaces, commas, hyphens, and periods.');
+      return;
+    }
+    if (famousFor && !famousRegex.test(famousFor)) {
+      setErrorMsg('Famous For can only contain letters, numbers, spaces, commas, and hyphens.');
+      return;
+    }
+
     const payload = {
       name,
       slug,
       description,
       coverImage,
       capital,
-      bestTimeToVisit,
+      bestTimeToVisit: `${startMonth} - ${endMonth}`,
       population,
       famousFor,
     };
@@ -180,8 +221,10 @@ export default function AdminGovernorates() {
               placeholder="Search governorates..."
               value={search}
               onChange={(e) => {
-                setSearch(e.target.value);
-                setCurrentPage(1);
+                if (/^[a-zA-Z\s]*$/.test(e.target.value)) {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }
               }}
               className="pl-9 w-full p-2.5 border border-gray-300 bg-gray-50 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-gold-500"
             />
@@ -243,9 +286,12 @@ export default function AdminGovernorates() {
                   required
                   value={name}
                   onChange={(e) => {
-                    setName(e.target.value);
-                    if (!editingId) {
-                      setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'));
+                    const val = e.target.value;
+                    if (/^[a-zA-Z\s]*$/.test(val)) {
+                      setName(val);
+                      if (!editingId) {
+                        setSlug(val.toLowerCase().replace(/\s+/g, '-'));
+                      }
                     }
                   }}
                   className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
@@ -259,7 +305,11 @@ export default function AdminGovernorates() {
                   type="text"
                   required
                   value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
+                  onChange={(e) => {
+                    if (/^[a-z0-9-]*$/.test(e.target.value)) {
+                      setSlug(e.target.value);
+                    }
+                  }}
                   className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
                   placeholder="e.g. aswan"
                 />
@@ -270,21 +320,43 @@ export default function AdminGovernorates() {
                 <input
                   type="text"
                   value={capital}
-                  onChange={(e) => setCapital(e.target.value)}
+                  onChange={(e) => {
+                    if (/^[a-zA-Z\s]*$/.test(e.target.value)) {
+                      setCapital(e.target.value);
+                    }
+                  }}
                   className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
                   placeholder="e.g. Aswan"
                 />
               </div>
 
-              <div>
-                <label className="block text-[11px] font-serif text-gray-800 mb-1">Best Time to Visit</label>
-                <input
-                  type="text"
-                  value={bestTimeToVisit}
-                  onChange={(e) => setBestTimeToVisit(e.target.value)}
-                  className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
-                  placeholder="e.g. Oct - Apr"
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-serif text-gray-800 mb-1">Best From Month</label>
+                  <select
+                    required
+                    value={startMonth}
+                    onChange={(e) => setStartMonth(e.target.value)}
+                    className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
+                  >
+                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-serif text-gray-800 mb-1">Best To Month</label>
+                  <select
+                    required
+                    value={endMonth}
+                    onChange={(e) => setEndMonth(e.target.value)}
+                    className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
+                  >
+                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -292,7 +364,11 @@ export default function AdminGovernorates() {
                 <input
                   type="text"
                   value={population}
-                  onChange={(e) => setPopulation(e.target.value)}
+                  onChange={(e) => {
+                    if (/^[a-zA-Z0-9\s,\.-]*$/.test(e.target.value)) {
+                      setPopulation(e.target.value);
+                    }
+                  }}
                   className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
                   placeholder="e.g. 1.5 Million"
                 />
@@ -303,7 +379,11 @@ export default function AdminGovernorates() {
                 <input
                   type="text"
                   value={famousFor}
-                  onChange={(e) => setFamousFor(e.target.value)}
+                  onChange={(e) => {
+                    if (/^[a-zA-Z0-9\s,-]*$/.test(e.target.value)) {
+                      setFamousFor(e.target.value);
+                    }
+                  }}
                   className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
                   placeholder="e.g. Ancient Temples"
                 />

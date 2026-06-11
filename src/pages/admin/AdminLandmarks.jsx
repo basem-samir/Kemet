@@ -30,8 +30,10 @@ export default function AdminLandmarks() {
   const [description, setDescription] = useState('');
   const [ticketPrice, setTicketPrice] = useState(10);
   const [category, setCategory] = useState('historical');
-  const [workingHours, setWorkingHours] = useState('09:00 AM - 05:00 PM');
-  const [bestTimeToVisit, setBestTimeToVisit] = useState('');
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('17:00');
+  const [startMonth, setStartMonth] = useState('Oct');
+  const [endMonth, setEndMonth] = useState('Apr');
   const [coverImage, setCoverImage] = useState('');
   const [galleryImages, setGalleryImages] = useState([]);
   const [imageUploading, setImageUploading] = useState(false);
@@ -233,8 +235,10 @@ export default function AdminLandmarks() {
     setDescription('');
     setTicketPrice(10);
     setCategory('historical');
-    setWorkingHours('09:00 AM - 05:00 PM');
-    setBestTimeToVisit('');
+    setStartTime('09:00');
+    setEndTime('17:00');
+    setStartMonth('Oct');
+    setEndMonth('Apr');
     setCoverImage('');
     setGalleryImages([]);
     setCoordinatesStr('31.233, 30.044');
@@ -250,8 +254,40 @@ export default function AdminLandmarks() {
     setDescription(l.description);
     setTicketPrice(l.ticketPrice);
     setCategory(l.category);
-    setWorkingHours(l.workingHours);
-    setBestTimeToVisit(l.bestTimeToVisit);
+    if (l.workingHours) {
+      const match = l.workingHours.match(/(\d{1,2}:\d{2})\s*(AM|PM)?\s*-\s*(\d{1,2}:\d{2})\s*(AM|PM)?/i);
+      if (match) {
+        const parseT = (t, ampm) => {
+          let [h, m] = t.split(':');
+          h = parseInt(h);
+          if (ampm?.toUpperCase() === 'PM' && h < 12) h += 12;
+          if (ampm?.toUpperCase() === 'AM' && h === 12) h = 0;
+          return `${h.toString().padStart(2, '0')}:${m}`;
+        };
+        setStartTime(parseT(match[1], match[2]));
+        setEndTime(parseT(match[3], match[4]));
+      } else {
+        setStartTime('09:00');
+        setEndTime('17:00');
+      }
+    } else {
+      setStartTime('09:00');
+      setEndTime('17:00');
+    }
+    
+    if (l.bestTimeToVisit) {
+      const parts = l.bestTimeToVisit.split('-');
+      if (parts.length === 2) {
+        setStartMonth(parts[0].trim());
+        setEndMonth(parts[1].trim());
+      } else {
+        setStartMonth('Oct');
+        setEndMonth('Apr');
+      }
+    } else {
+      setStartMonth('Oct');
+      setEndMonth('Apr');
+    }
     setCoverImage(l.images?.[0] || '');
     setGalleryImages(l.images?.slice(1) || []);
     if (l.location?.coordinates?.length === 2) {
@@ -277,14 +313,23 @@ export default function AdminLandmarks() {
       return;
     }
 
+    const formatTime = (timeStr) => {
+      if (!timeStr) return '';
+      const [h, m] = timeStr.split(':');
+      let hour = parseInt(h);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      hour = hour % 12 || 12;
+      return `${hour.toString().padStart(2, '0')}:${m} ${ampm}`;
+    };
+
     const payload = {
       name,
       governorate_id: govId,
       description,
       images: [coverImage, ...galleryImages.filter(img => img && img.trim() !== '')],
       ticketPrice: parseFloat(ticketPrice),
-      workingHours,
-      bestTimeToVisit,
+      workingHours: `${formatTime(startTime)} - ${formatTime(endTime)}`,
+      bestTimeToVisit: `${startMonth} - ${endMonth}`,
       category,
       location: {
         type: 'Point',
@@ -318,8 +363,10 @@ export default function AdminLandmarks() {
               placeholder="Search landmarks..."
               value={search}
               onChange={(e) => {
-                setSearch(e.target.value);
-                setCurrentPage(1);
+                if (/^[a-zA-Z\s]*$/.test(e.target.value)) {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }
               }}
               className="pl-9 w-full p-2.5 border border-gray-300 bg-gray-50 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-gold-500"
             />
@@ -412,7 +459,12 @@ export default function AdminLandmarks() {
                       type="text"
                       required
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^[a-zA-Z\s]*$/.test(val)) {
+                          setName(val);
+                        }
+                      }}
                       className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
                       placeholder="e.g. Karnak Temple"
                     />
@@ -458,26 +510,55 @@ export default function AdminLandmarks() {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-[11px] font-serif text-gray-800 mb-1 uppercase tracking-widest">Working Hours</label>
-                    <input
-                      type="text"
-                      required
-                      value={workingHours}
-                      onChange={(e) => setWorkingHours(e.target.value)}
-                      className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
-                      placeholder="e.g. 09:00 AM - 05:00 PM"
-                    />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-serif text-gray-800 mb-1 uppercase tracking-widest">Opening Time</label>
+                      <input
+                        type="time"
+                        required
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-serif text-gray-800 mb-1 uppercase tracking-widest">Closing Time</label>
+                      <input
+                        type="time"
+                        required
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-[11px] font-serif text-gray-800 mb-1 uppercase tracking-widest">Best Time to Visit</label>
-                    <input
-                      type="text"
-                      value={bestTimeToVisit}
-                      onChange={(e) => setBestTimeToVisit(e.target.value)}
-                      className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
-                      placeholder="e.g. Oct - Apr"
-                    />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-serif text-gray-800 mb-1 uppercase tracking-widest">Best From Month</label>
+                      <select
+                        required
+                        value={startMonth}
+                        onChange={(e) => setStartMonth(e.target.value)}
+                        className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
+                      >
+                        {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-serif text-gray-800 mb-1 uppercase tracking-widest">Best To Month</label>
+                      <select
+                        required
+                        value={endMonth}
+                        onChange={(e) => setEndMonth(e.target.value)}
+                        className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
+                      >
+                        {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
               )}
@@ -536,7 +617,11 @@ export default function AdminLandmarks() {
                           type="text"
                           required
                           value={coordinatesStr}
-                          onChange={(e) => setCoordinatesStr(e.target.value)}
+                          onChange={(e) => {
+                            if (/^[0-9\s,\.-]*$/.test(e.target.value)) {
+                              setCoordinatesStr(e.target.value);
+                            }
+                          }}
                           className="w-full p-2 text-xs bg-transparent focus:outline-none"
                           placeholder="31.233, 30.044"
                         />

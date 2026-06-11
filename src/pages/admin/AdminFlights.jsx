@@ -176,8 +176,10 @@ export default function AdminFlights() {
               placeholder="Search flights..."
               value={search}
               onChange={(e) => {
-                setSearch(e.target.value);
-                setCurrentPage(1);
+                if (/^[a-zA-Z\s]*$/.test(e.target.value)) {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }
               }}
               className="pl-9 w-full p-2.5 border border-gray-300 bg-gray-50 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-gold-500"
             />
@@ -237,7 +239,11 @@ export default function AdminFlights() {
                   type="text"
                   required
                   value={airline}
-                  onChange={(e) => setAirline(e.target.value)}
+                  onChange={(e) => {
+                    if (/^[a-zA-Z\s]*$/.test(e.target.value)) {
+                      setAirline(e.target.value);
+                    }
+                  }}
                   className="mt-1 w-full p-2 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-gold-500 focus:outline-none"
                 />
               </div>
@@ -248,7 +254,11 @@ export default function AdminFlights() {
                   type="text"
                   required
                   value={flightNumber}
-                  onChange={(e) => setFlightNumber(e.target.value)}
+                  onChange={(e) => {
+                    if (/^[a-zA-Z0-9\s]*$/.test(e.target.value)) {
+                      setFlightNumber(e.target.value);
+                    }
+                  }}
                   className="mt-1 w-full p-2 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-gold-500 focus:outline-none"
                 />
               </div>
@@ -272,7 +282,11 @@ export default function AdminFlights() {
                   type="text"
                   required
                   value={origin}
-                  onChange={(e) => setOrigin(e.target.value)}
+                  onChange={(e) => {
+                    if (/^[a-zA-Z]*$/.test(e.target.value)) {
+                      setOrigin(e.target.value);
+                    }
+                  }}
                   className="mt-1 w-full p-2 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-gold-500 focus:outline-none"
                 />
               </div>
@@ -283,7 +297,11 @@ export default function AdminFlights() {
                   type="text"
                   required
                   value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
+                  onChange={(e) => {
+                    if (/^[a-zA-Z]*$/.test(e.target.value)) {
+                      setDestination(e.target.value);
+                    }
+                  }}
                   className="mt-1 w-full p-2 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-gold-500 focus:outline-none"
                 />
               </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { tourismTypesAPI, adminAPI } from '../../api/endpoints';
+import { tourismTypesAPI, adminAPI, landmarksAPI } from '../../api/endpoints';
 import { Plus, Trash2, Loader2, Search, AlertCircle, Edit3, X } from 'lucide-react';
 
 export default function AdminTourismTypes() {
@@ -57,10 +57,18 @@ export default function AdminTourismTypes() {
     }
   };
 
-  const { data: typesData, isLoading } = useQuery({
+  const { data: typesData, isLoading: typesLoading } = useQuery({
     queryKey: ['adminTourismTypes'],
     queryFn: () => tourismTypesAPI.getAll({ limit: 1000 }),
   });
+
+  const { data: landmarksData, isLoading: landmarksLoading } = useQuery({
+    queryKey: ['adminAllLandmarks'],
+    queryFn: () => landmarksAPI.getAll({ limit: 5000 }),
+  });
+
+  const isLoading = typesLoading || landmarksLoading;
+  const allLandmarks = landmarksData?.data?.data?.landmarks || landmarksData?.data?.landmarks || [];
 
   const tourismTypes = typesData?.data?.types || typesData?.data?.data?.types || [];
 
@@ -212,8 +220,10 @@ export default function AdminTourismTypes() {
               placeholder="Search tourism types..."
               value={search}
               onChange={(e) => {
-                setSearch(e.target.value);
-                setCurrentPage(1);
+                if (/^[a-zA-Z\s]*$/.test(e.target.value)) {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }
               }}
               className="pl-9 w-full p-2.5 border border-gray-300 bg-gray-50 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-gold-500"
             />
@@ -274,9 +284,11 @@ export default function AdminTourismTypes() {
                   required
                   value={name}
                   onChange={(e) => {
-                    setName(e.target.value);
-                    if (!editingId) {
-                      setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'));
+                    if (/^[a-zA-Z\s]*$/.test(e.target.value)) {
+                      setName(e.target.value);
+                      if (!editingId) {
+                        setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'));
+                      }
                     }
                   }}
                   className="mt-1 w-full p-2 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-gold-500 focus:outline-none"
@@ -290,7 +302,11 @@ export default function AdminTourismTypes() {
                   type="text"
                   required
                   value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
+                  onChange={(e) => {
+                    if (/^[a-z-]*$/.test(e.target.value)) {
+                      setSlug(e.target.value);
+                    }
+                  }}
                   className="mt-1 w-full p-2 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-gold-500 focus:outline-none"
                   placeholder="e.g. cultural-tourism"
                 />
@@ -404,8 +420,10 @@ export default function AdminTourismTypes() {
                         placeholder="Subcategory Name"
                         value={subName}
                         onChange={(e) => {
-                          setSubName(e.target.value);
-                          setSubSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'));
+                          if (/^[a-zA-Z\s]*$/.test(e.target.value)) {
+                            setSubName(e.target.value);
+                            setSubSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'));
+                          }
                         }}
                         className="w-full p-2 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-gold-500 focus:outline-none"
                       />
@@ -415,7 +433,11 @@ export default function AdminTourismTypes() {
                         type="text"
                         placeholder="Subcategory Slug"
                         value={subSlug}
-                        onChange={(e) => setSubSlug(e.target.value)}
+                        onChange={(e) => {
+                          if (/^[a-z-]*$/.test(e.target.value)) {
+                            setSubSlug(e.target.value);
+                          }
+                        }}
                         className="w-full p-2 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-gold-500 focus:outline-none"
                       />
                     </div>
@@ -509,6 +531,7 @@ export default function AdminTourismTypes() {
                 <th className="px-6 py-4">Image</th>
                 <th className="px-6 py-4">Name</th>
                 <th className="px-6 py-4">Order</th>
+                <th className="px-6 py-4 text-center">Landmarks</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
@@ -528,6 +551,11 @@ export default function AdminTourismTypes() {
                     <div className="text-[10px] text-gray-400 italic">{type.slug}</div>
                   </td>
                   <td className="px-6 py-4">{type.order}</td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="inline-flex items-center justify-center bg-gray-100 text-gray-700 font-bold px-2.5 py-1 rounded-full text-xs border border-gray-200">
+                      {allLandmarks.filter(l => (l.tourismType?._id || l.tourismType) === type._id || l.category === type.slug).length}
+                    </span>
+                  </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1.5 rounded-full text-[10px] font-bold ${type.isActive ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
                       {type.isActive ? 'Active' : 'Inactive'}

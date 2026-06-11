@@ -61,8 +61,10 @@ export default function AdminUsers() {
   const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
 
   const handleSearchChange = (val) => {
-    setSearch(val);
-    setCurrentPage(1);
+    if (/^[a-zA-Z0-9\s@.-]*$/.test(val)) {
+      setSearch(val);
+      setCurrentPage(1);
+    }
   };
 
   const handleStatusFilterChange = (status) => {

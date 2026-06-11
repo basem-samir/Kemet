@@ -357,8 +357,10 @@ export default function AdminHotels() {
               placeholder="Search hotels..."
               value={search}
               onChange={(e) => {
-                setSearch(e.target.value);
-                setCurrentPage(1);
+                if (/^[a-zA-Z\s]*$/.test(e.target.value)) {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }
               }}
               className="pl-9 w-full p-2.5 border border-gray-300 bg-gray-50 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-gold-500"
             />
@@ -451,7 +453,11 @@ export default function AdminHotels() {
                       type="text"
                       required
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      onChange={(e) => {
+                        if (/^[a-zA-Z\s]*$/.test(e.target.value)) {
+                          setName(e.target.value);
+                        }
+                      }}
                       className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
                       placeholder="e.g. Nile Hilton"
                     />
@@ -478,7 +484,11 @@ export default function AdminHotels() {
                       type="text"
                       required
                       value={city}
-                      onChange={(e) => setCity(e.target.value)}
+                      onChange={(e) => {
+                        if (/^[a-zA-Z\s]*$/.test(e.target.value)) {
+                          setCity(e.target.value);
+                        }
+                      }}
                       className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
                       placeholder="e.g. Luxor"
                     />
@@ -501,7 +511,11 @@ export default function AdminHotels() {
                       type="text"
                       required
                       value={amenitiesStr}
-                      onChange={(e) => setAmenitiesStr(e.target.value)}
+                      onChange={(e) => {
+                        if (/^[a-zA-Z\s,]*$/.test(e.target.value)) {
+                          setAmenitiesStr(e.target.value);
+                        }
+                      }}
                       className="w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
                       placeholder="Free WiFi, Nile View, Pool..."
                     />
@@ -563,7 +577,11 @@ export default function AdminHotels() {
                           type="text"
                           required
                           value={coordinatesStr}
-                          onChange={(e) => setCoordinatesStr(e.target.value)}
+                          onChange={(e) => {
+                            if (/^[0-9\s,\.-]*$/.test(e.target.value)) {
+                              setCoordinatesStr(e.target.value);
+                            }
+                          }}
                           className="w-full p-2 text-xs bg-transparent focus:outline-none"
                           placeholder="31.233, 30.044"
                         />
@@ -678,7 +696,11 @@ export default function AdminHotels() {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                               <label className="block text-[10px] font-bold text-gray-500 uppercase">Room Name</label>
-                              <input type="text" required value={room.name} onChange={(e) => updateRoomType(idx, 'name', e.target.value)} className="w-full p-2 border border-[#d9cbb2] bg-[#fdfbf7] rounded text-xs focus:ring-1 focus:ring-[#b89047] focus:outline-none" placeholder="e.g. Deluxe Suite" />
+                              <input type="text" required value={room.name} onChange={(e) => {
+                                if (/^[a-zA-Z0-9\s-]*$/.test(e.target.value)) {
+                                  updateRoomType(idx, 'name', e.target.value);
+                                }
+                              }} className="w-full p-2 border border-[#d9cbb2] bg-[#fdfbf7] rounded text-xs focus:ring-1 focus:ring-[#b89047] focus:outline-none" placeholder="e.g. Deluxe Suite" />
                             </div>
                             <div>
                               <label className="block text-[10px] font-bold text-gray-500 uppercase">Available Count</label>

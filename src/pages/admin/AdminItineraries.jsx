@@ -39,8 +39,10 @@ export default function AdminItineraries() {
 
   const handleTitleChange = (e) => {
     const newTitle = e.target.value;
-    setTitle(newTitle);
-    setSlug(newTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
+    if (/^[a-zA-Z\s-]*$/.test(newTitle)) {
+      setTitle(newTitle);
+      setSlug(newTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
+    }
   };
 
   const handleImageUpload = async (e) => {
@@ -338,8 +340,10 @@ export default function AdminItineraries() {
               placeholder="Search itineraries..."
               value={search}
               onChange={(e) => {
-                setSearch(e.target.value);
-                setCurrentPage(1);
+                if (/^[a-zA-Z\s]*$/.test(e.target.value)) {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }
               }}
               className="pl-9 w-full p-2.5 border border-gray-300 bg-gray-50 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-gold-500"
             />
@@ -438,7 +442,11 @@ export default function AdminItineraries() {
                         type="text"
                         required
                         value={slug}
-                        onChange={(e) => setSlug(e.target.value)}
+                        onChange={(e) => {
+                          if (/^[a-z0-9-]*$/.test(e.target.value)) {
+                            setSlug(e.target.value);
+                          }
+                        }}
                         className="mt-1 w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
                         placeholder="islamic-cairo-deep-dive"
                       />
@@ -720,7 +728,11 @@ export default function AdminItineraries() {
                       <input
                         type="text"
                         value={highlightsStr}
-                        onChange={(e) => setHighlightsStr(e.target.value)}
+                        onChange={(e) => {
+                          if (/^[a-zA-Z0-9\s,-]*$/.test(e.target.value)) {
+                            setHighlightsStr(e.target.value);
+                          }
+                        }}
                         className="mt-1 w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
                       />
                     </div>
@@ -729,7 +741,11 @@ export default function AdminItineraries() {
                       <input
                         type="text"
                         value={includesStr}
-                        onChange={(e) => setIncludesStr(e.target.value)}
+                        onChange={(e) => {
+                          if (/^[a-zA-Z0-9\s,-]*$/.test(e.target.value)) {
+                            setIncludesStr(e.target.value);
+                          }
+                        }}
                         className="mt-1 w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
                       />
                     </div>
@@ -738,7 +754,11 @@ export default function AdminItineraries() {
                       <input
                         type="text"
                         value={notIncludesStr}
-                        onChange={(e) => setNotIncludesStr(e.target.value)}
+                        onChange={(e) => {
+                          if (/^[a-zA-Z0-9\s,-]*$/.test(e.target.value)) {
+                            setNotIncludesStr(e.target.value);
+                          }
+                        }}
                         className="mt-1 w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
                       />
                     </div>
@@ -747,7 +767,11 @@ export default function AdminItineraries() {
                       <input
                         type="text"
                         value={tipsStr}
-                        onChange={(e) => setTipsStr(e.target.value)}
+                        onChange={(e) => {
+                          if (/^[a-zA-Z0-9\s,-]*$/.test(e.target.value)) {
+                            setTipsStr(e.target.value);
+                          }
+                        }}
                         className="mt-1 w-full p-2 border border-[#d9cbb2] rounded text-xs bg-[#fdfbf7] focus:ring-1 focus:ring-[#b89047] focus:outline-none"
                       />
                     </div>
