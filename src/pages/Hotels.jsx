@@ -332,7 +332,7 @@ export default function Hotels() {
             {totalPages > 1 && (
               <div className="flex justify-center items-center space-x-2 pt-6">
                 <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  onClick={() => { setCurrentPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }}
                   disabled={currentPage === 1}
                   className="px-4 py-2.5 rounded-xl border bg-white disabled:opacity-50 text-xs font-bold text-navy-500 transition hover:bg-gold-500 hover:text-navy-950 shadow-sm"
                 >
@@ -342,7 +342,7 @@ export default function Hotels() {
                   Page {currentPage} of {totalPages}
                 </span>
                 <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() => { setCurrentPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }}
                   disabled={currentPage === totalPages}
                   className="px-4 py-2.5 rounded-xl border bg-white disabled:opacity-50 text-xs font-bold text-navy-500 transition hover:bg-gold-500 hover:text-navy-950 shadow-sm"
                 >

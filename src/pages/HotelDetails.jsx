@@ -66,7 +66,7 @@ export default function HotelDetails() {
       const [lng, lat] = coords;
       const initMap = async () => {
         const L = await import('leaflet');
-        
+
         // Inject Leaflet CSS if not loaded
         if (!document.getElementById('leaflet-css-cdn')) {
           const link = document.createElement('link');
@@ -116,7 +116,7 @@ export default function HotelDetails() {
 
         L.marker([lat, lng], { icon: pinIcon }).addTo(mapInstance);
       };
-      
+
       initMap();
     }
 
@@ -215,14 +215,14 @@ export default function HotelDetails() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-24 font-sans text-navy-900">
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
+
         {/* Hero Gallery Section */}
         <div className="space-y-4 mb-8">
           <div className="w-full h-[60vh] rounded-3xl overflow-hidden shadow-sm">
-            <img 
-              src={hotel.images?.[activeImageIndex] || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1920&q=80'} 
+            <img
+              src={hotel.images?.[activeImageIndex] || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1920&q=80'}
               alt={hotel.name}
               className="w-full h-full object-cover"
             />
@@ -233,9 +233,8 @@ export default function HotelDetails() {
                 <button
                   key={idx}
                   onClick={() => setActiveImageIndex(idx)}
-                  className={`flex-shrink-0 h-24 w-40 rounded-2xl overflow-hidden border-4 transition-all ${
-                    activeImageIndex === idx ? 'border-[#C1A249] shadow-md' : 'border-transparent hover:opacity-90'
-                  }`}
+                  className={`flex-shrink-0 h-24 w-40 rounded-2xl overflow-hidden border-4 transition-all ${activeImageIndex === idx ? 'border-[#C1A249] shadow-md' : 'border-transparent hover:opacity-90'
+                    }`}
                 >
                   <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
                 </button>
@@ -246,10 +245,10 @@ export default function HotelDetails() {
 
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
+
           {/* Left Column */}
           <div className="lg:col-span-8 space-y-8">
-            
+
             {/* Title & Description Card */}
             <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
               <h1 className="text-4xl font-serif font-bold text-navy-900 mb-4">{hotel.name}</h1>
@@ -307,7 +306,7 @@ export default function HotelDetails() {
                           <span className="text-2xl font-bold text-[#C1A249]">{room.pricePerNight} EGP</span>
                           <span className="text-sm text-gray-500">/night</span>
                         </div>
-                        <button 
+                        <button
                           onClick={() => setSelectedRoomName(room.name)}
                           disabled={room.availableCount === 0}
                           className={`px-6 py-2 rounded-xl font-bold text-sm transition ${room.availableCount === 0 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : selectedRoomName === room.name ? 'bg-navy-900 text-white' : 'bg-[#C1A249] hover:bg-[#b59546] text-white'}`}
@@ -326,16 +325,16 @@ export default function HotelDetails() {
               <h3 className="text-2xl font-serif font-bold text-navy-900 pb-2">
                 Guest Reviews
               </h3>
-              
+
               <div className="space-y-6">
                 {reviews.length > 0 ? reviews.map(r => (
                   <div key={r._id} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden shrink-0">
-                          <img 
-                            src={r.user_id?.avatar || `https://ui-avatars.com/api/?name=${r.user_id?.full_name || 'User'}&background=random`} 
-                            alt={`${r.user_id?.full_name || 'User'}'s avatar`} 
+                          <img
+                            src={r.user_id?.avatar || `https://ui-avatars.com/api/?name=${r.user_id?.full_name || 'User'}&background=random`}
+                            alt={`${r.user_id?.full_name || 'User'}'s avatar`}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -368,7 +367,7 @@ export default function HotelDetails() {
           <div className="lg:col-span-4">
             <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 sticky top-24">
               <h3 className="text-xl font-serif font-bold text-navy-900 mb-6">Book Your Stay</h3>
-              
+
               <form onSubmit={handleBookingSubmit} className="space-y-5">
                 {bookingError && (
                   <div className="flex items-center space-x-1.5 text-xs text-red-700 bg-red-50 p-3 rounded-lg border border-red-200">
@@ -427,7 +426,7 @@ export default function HotelDetails() {
                       const roomTotal = room.pricePerNight * nights;
                       const serviceFee = Math.round(roomTotal * 0.05); // 5% fee
                       const total = roomTotal + serviceFee;
-                      
+
                       return (
                         <>
                           <div className="flex justify-between text-gray-600">
@@ -459,7 +458,7 @@ export default function HotelDetails() {
 
             </div>
           </div>
-          
+
         </div>
       </div>
 

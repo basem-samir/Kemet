@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { bookingsAPI } from '../../api/endpoints';
 import { useAuthStore } from '../../store/authStore';
 import { Calendar, CreditCard, XCircle, Loader2, Plane, Building2, Landmark, ShieldAlert, CheckCircle } from 'lucide-react';
@@ -15,6 +15,16 @@ export default function MyBookings() {
   const [activeQRBooking, setActiveQRBooking] = useState(null);
   const [activeItineraryBooking, setActiveItineraryBooking] = useState(null);
   const [selectedDayTab, setSelectedDayTab] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get('page') || '1', 10);
+  const setCurrentPage = (val) => {
+    const newPage = typeof val === 'function' ? val(currentPage) : val;
+    setSearchParams((prev) => {
+      prev.set('page', newPage);
+      return prev;
+    });
+  };
+  const itemsPerPage = 5;
   const [completedLandmarks, setCompletedLandmarks] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('kemet_completed_landmarks') || '{}');
@@ -135,6 +145,7 @@ export default function MyBookings() {
                   onClick={() => {
                     setActiveTab(tab.id);
                     setActiveStatus('all'); // Reset status sub-filter on category change for better UX
+                    setCurrentPage(1);
                   }}
                   className={`pb-3 font-bold relative transition whitespace-nowrap shrink-0 ${
                     activeTab === tab.id
@@ -160,7 +171,10 @@ export default function MyBookings() {
               return (
                 <button
                   key={statusTab.id}
-                  onClick={() => setActiveStatus(statusTab.id)}
+                  onClick={() => {
+                    setActiveStatus(statusTab.id);
+                    setCurrentPage(1);
+                  }}
                   className={`px-3 py-1.5 rounded-full border text-[10px] font-bold transition whitespace-nowrap ${
                     activeStatus === statusTab.id
                       ? 'bg-gold-500 text-navy-900 border-gold-500 shadow-sm'
@@ -178,8 +192,16 @@ export default function MyBookings() {
               No bookings found matching the selected filters.
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredBookings.map((booking) => {
+            <>
+              <div className="space-y-4">
+              {(() => {
+                const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
+                const safeCurrentPage = Math.min(currentPage, Math.max(1, totalPages));
+                const indexOfLastItem = safeCurrentPage * itemsPerPage;
+                const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+                const currentBookings = filteredBookings.slice(indexOfFirstItem, indexOfLastItem);
+                
+                return currentBookings.map((booking) => {
                 const isPending = booking.status === 'pending';
                 const isConfirmed = booking.status === 'confirmed';
                 const isCompleted = booking.status === 'completed';
@@ -286,8 +308,41 @@ export default function MyBookings() {
                     </div>
                   </div>
                 );
-              })}
+              })})()}
             </div>
+            
+            {/* Pagination Controls */}
+            {Math.ceil(filteredBookings.length / itemsPerPage) > 1 && (() => {
+              const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
+              return (
+                <div className="flex justify-center items-center space-x-2 pt-4">
+                  <button
+                    onClick={() => {
+                      setCurrentPage((p) => Math.max(1, p - 1));
+                      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                    }}
+                    disabled={currentPage <= 1}
+                    className="px-4 py-2 rounded-xl border bg-white disabled:opacity-50 text-xs font-bold text-navy-500 transition hover:bg-gold-500 hover:text-navy-950 shadow-sm"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-xs text-gray-500 font-semibold px-3">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setCurrentPage((p) => Math.min(totalPages, p + 1));
+                      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                    }}
+                    disabled={currentPage >= totalPages}
+                    className="px-4 py-2 rounded-xl border bg-white disabled:opacity-50 text-xs font-bold text-navy-500 transition hover:bg-gold-500 hover:text-navy-950 shadow-sm"
+                  >
+                    Next
+                  </button>
+                </div>
+              );
+            })()}
+            </>
           )}
         </div>
       )}

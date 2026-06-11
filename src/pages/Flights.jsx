@@ -434,7 +434,7 @@ export default function Flights() {
               {totalPages > 1 && (
                 <div className="flex justify-center items-center space-x-2 pt-6">
                   <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    onClick={() => { setCurrentPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }}
                     disabled={currentPage === 1}
                     className="px-3.5 py-2 rounded-lg border bg-white disabled:opacity-50 text-xs font-bold text-navy-500 transition hover:bg-gold-500 hover:text-navy-900"
                   >
@@ -444,7 +444,7 @@ export default function Flights() {
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    onClick={() => { setCurrentPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }}
                     disabled={currentPage === totalPages}
                     className="px-3.5 py-2 rounded-lg border bg-white disabled:opacity-50 text-xs font-bold text-navy-500 transition hover:bg-gold-500 hover:text-navy-900"
                   >

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { favoritesAPI } from '../../api/endpoints';
 import { Heart, Loader2, MapPin, Eye, Compass, ShieldAlert, CheckCircle } from 'lucide-react';
 
@@ -8,6 +8,17 @@ export default function Favorites() {
   const queryClient = useQueryClient();
   const [toast, setToast] = useState(null); // { message: string, type: 'success' | 'error' | 'info' }
   const [confirmRemoveFav, setConfirmRemoveFav] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get('page') || '1', 10);
+  const setCurrentPage = (val) => {
+    const newPage = typeof val === 'function' ? val(currentPage) : val;
+    setSearchParams((prev) => {
+      prev.set('page', newPage);
+      return prev;
+    });
+  };
+  const itemsPerPage = 6;
+  const [filterType, setFilterType] = useState('all');
 
   const { data: favsData, isLoading } = useQuery({
     queryKey: ['favorites'],
@@ -15,6 +26,7 @@ export default function Favorites() {
   });
 
   const favorites = favsData?.data?.data?.favorites || favsData?.data?.favorites || [];
+  const filteredFavorites = favorites.filter(fav => filterType === 'all' || fav.item_type === filterType);
 
   // Toggle/Delete favorite mutation
   const toggleFavoriteMutation = useMutation({
@@ -63,56 +75,129 @@ export default function Favorites() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {favorites.map((fav) => {
-            const item = fav.item_id;
-            if (!item) return null;
-
-            const detailLink = fav.item_type === 'hotel' 
-              ? `/hotels/${item.slug}` 
-              : `/landmarks/${item.slug}`;
-
-            return (
-              <div 
-                key={fav._id} 
-                className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col hover:border-gold-500/30 transition relative group"
+        <div className="space-y-6">
+          {/* Filters */}
+          <div className="flex space-x-2 pb-2">
+            {[
+              { id: 'all', label: 'All Favorites' },
+              { id: 'landmark', label: 'Landmarks' },
+              { id: 'hotel', label: 'Hotels' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setFilterType(tab.id);
+                  setCurrentPage(1);
+                }}
+                className={`px-4 py-2 rounded-full text-xs font-bold transition ${
+                  filterType === tab.id
+                    ? 'bg-gold-500 text-navy-900 shadow-sm'
+                    : 'bg-white border border-gray-200 text-gray-500 hover:text-navy-500 hover:border-gray-300'
+                }`}
               >
-                {/* Remove from favorites button */}
-                <button
-                  onClick={() => setConfirmRemoveFav(fav)}
-                  className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur-sm p-1.5 rounded-full shadow hover:bg-red-50 hover:text-red-500 text-gray-600 transition"
-                  title="Remove from Favorites"
-                >
-                  <Heart className="h-4.5 w-4.5 fill-red-500 text-red-500" />
-                </button>
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-                <div className="h-40 overflow-hidden bg-gray-100 relative">
-                  <img 
-                    src={item.images?.[0] || 'https://images.unsplash.com/photo-1539650116574-8efeb43e2750?auto=format&fit=crop&w=400&q=80'} 
-                    alt={item.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                  />
-                </div>
+          {filteredFavorites.length === 0 ? (
+            <div className="text-center py-12 text-gray-400 text-xs italic">
+              No favorites found matching the selected filter.
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {(() => {
+                  const totalPages = Math.ceil(filteredFavorites.length / itemsPerPage);
+                  const safeCurrentPage = Math.min(currentPage, Math.max(1, totalPages));
+                  const indexOfLastItem = safeCurrentPage * itemsPerPage;
+                  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+                  const currentFavorites = filteredFavorites.slice(indexOfFirstItem, indexOfLastItem);
+                  
+                  return currentFavorites.map((fav) => {
+                    const item = fav.item_id;
+                    if (!item) return null;
 
-                <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-gold-600 uppercase tracking-wider block">{fav.item_type}</span>
-                    <h4 className="font-serif font-bold text-navy-500 text-base line-clamp-1">{item.name}</h4>
-                  </div>
+                    const detailLink = fav.item_type === 'hotel' 
+                      ? `/hotels/${item.slug}` 
+                      : `/landmarks/${item.slug}`;
 
-                  <div className="flex items-center justify-between text-xs pt-2 border-t border-gray-100">
-                    <Link 
-                      to={detailLink} 
-                      className="text-navy-500 hover:text-gold-600 font-bold flex items-center space-x-1.5"
-                    >
-                      <Eye className="h-4 w-4" />
-                      <span>View details</span>
-                    </Link>
-                  </div>
-                </div>
+                    return (
+                      <div 
+                        key={fav._id} 
+                        className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col hover:border-gold-500/30 transition relative group"
+                      >
+                        {/* Remove from favorites button */}
+                        <button
+                          onClick={() => setConfirmRemoveFav(fav)}
+                          className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur-sm p-1.5 rounded-full shadow hover:bg-red-50 hover:text-red-500 text-gray-600 transition"
+                          title="Remove from Favorites"
+                        >
+                          <Heart className="h-4.5 w-4.5 fill-red-500 text-red-500" />
+                        </button>
+
+                        <div className="h-40 overflow-hidden bg-gray-100 relative">
+                          <img 
+                            src={item.images?.[0] || 'https://images.unsplash.com/photo-1539650116574-8efeb43e2750?auto=format&fit=crop&w=400&q=80'} 
+                            alt={item.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                          />
+                        </div>
+
+                        <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-bold text-gold-600 uppercase tracking-wider block">{fav.item_type}</span>
+                            <h4 className="font-serif font-bold text-navy-500 text-base line-clamp-1">{item.name}</h4>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs pt-2 border-t border-gray-100">
+                            <Link 
+                              to={detailLink} 
+                              className="text-navy-500 hover:text-gold-600 font-bold flex items-center space-x-1.5"
+                            >
+                              <Eye className="h-4 w-4" />
+                              <span>View details</span>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })})()}
               </div>
-            );
-          })}
+            
+            {/* Pagination Controls */}
+            {Math.ceil(filteredFavorites.length / itemsPerPage) > 1 && (() => {
+              const totalPages = Math.ceil(filteredFavorites.length / itemsPerPage);
+              return (
+                <div className="flex justify-center items-center space-x-2 pt-4">
+                  <button
+                    onClick={() => {
+                      setCurrentPage((p) => Math.max(1, p - 1));
+                      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                    }}
+                    disabled={currentPage <= 1}
+                    className="px-4 py-2 rounded-xl border bg-white disabled:opacity-50 text-xs font-bold text-navy-500 transition hover:bg-gold-500 hover:text-navy-950 shadow-sm"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-xs text-gray-500 font-semibold px-3">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setCurrentPage((p) => Math.min(totalPages, p + 1));
+                      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                    }}
+                    disabled={currentPage >= totalPages}
+                    className="px-4 py-2 rounded-xl border bg-white disabled:opacity-50 text-xs font-bold text-navy-500 transition hover:bg-gold-500 hover:text-navy-950 shadow-sm"
+                  >
+                    Next
+                  </button>
+                </div>
+              );
+            })()}
+            </>
+          )}
         </div>
       )}
 
