@@ -121,37 +121,7 @@ export default function Auth() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Nationality</label>
-                  <div className="mt-1 relative">
-                    <Globe className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                    <input
-                      type="text"
-                      name="nationality"
-                      value={formData.nationality}
-                      onChange={handleChange}
-                      className="pl-10 w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none"
-                      placeholder="e.g. UK"
-                    />
-                  </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-                  <div className="mt-1 relative">
-                    <Phone className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                    <input
-                      type="text"
-                      name="phone_number"
-                      value={formData.phone_number}
-                      onChange={handleChange}
-                      className="pl-10 w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none"
-                      placeholder="+44 77..."
-                    />
-                  </div>
-                </div>
-              </div>
             </>
           )}
 
