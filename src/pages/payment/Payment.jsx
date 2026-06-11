@@ -301,7 +301,7 @@ export default function Payment() {
 
         <div className="md:col-span-2 space-y-6">
           <div className="bg-navy-900 text-white p-6 rounded-xl border border-gold-500/30 shadow-md space-y-4">
-            <h3 className="font-serif text-lg font-bold text-gold-500 border-b border-gray-800 pb-2">Invoice Summary</h3>
+            <h3 className="font-serif text-lg font-bold !text-white uppercase border-b border-gray-800 pb-2">Invoice Summary</h3>
 
             <div className="space-y-1">
               <span className="font-semibold block text-sm">Booking Type:</span>
