@@ -247,7 +247,11 @@ export default function Payment() {
 
               {paymentMethod === 'paypal' && (
                 <div className="pt-2">
-                  <PayPalScriptProvider options={{ "client-id": import.meta.env.VITE_PAYPAL_CLIENT_ID || "test", currency: "USD" }}>
+                  <PayPalScriptProvider options={{ 
+                    "client-id": import.meta.env.VITE_PAYPAL_CLIENT_ID || "Aaj0WYQZbdncpYBQ18RPQirE9UwLDyZ36xRMrkZwhyLCQBgAi25LhE9i_dTdS7clQ6tBo-DCRPkh81Li", 
+                    currency: "USD",
+                    "disable-funding": "card,paylater,credit" 
+                  }}>
                     <PayPalButtons
                       style={{ layout: "vertical", shape: "rect" }}
                       createOrder={async () => {
@@ -281,7 +285,8 @@ export default function Payment() {
                         }
                       }}
                       onError={(err) => {
-                        handlePayError("PayPal checkout failed.");
+                        console.error('PayPal checkout failed:', err);
+                        // Do not overwrite existing specific errors
                       }}
                     />
                   </PayPalScriptProvider>
