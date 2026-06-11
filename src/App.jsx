@@ -12,6 +12,8 @@ import ScrollToTop from './components/layout/ScrollToTop';
 // Pages
 import Home from './pages/Home';
 import Auth from './pages/Auth';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Governorates from './pages/Governorates';
 import GovernorateDetails from './pages/GovernorateDetails';
 import Landmarks from './pages/Landmarks';
@@ -91,6 +93,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/governorates" element={<Governorates />} />
             <Route path="/governorates/:slug" element={<GovernorateDetails />} />
             <Route path="/landmarks" element={<Landmarks />} />

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Compass, Mail, Lock, User, Globe, Phone, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -180,6 +180,13 @@ export default function Auth() {
               />
             </div>
             {formErrors.password && <p className="text-red-500 text-[10px] mt-1">{formErrors.password}</p>}
+            {isLogin && (
+              <div className="mt-2 text-right">
+                <Link to="/forgot-password" className="text-sm font-medium text-gold-600 hover:text-gold-500 transition-colors">
+                  Forgot your password?
+                </Link>
+              </div>
+            )}
           </div>
 
           <button
