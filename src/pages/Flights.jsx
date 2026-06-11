@@ -73,6 +73,36 @@ export default function Flights() {
 
   const flights = flightsData?.data?.data?.flights || flightsData?.data?.flights || [];
 
+  const { data: bookingsData } = useQuery({
+    queryKey: ['allBookings'],
+    queryFn: () => bookingsAPI.getAll(),
+    enabled: isAuthenticated,
+  });
+
+  const bookingsFromAPI = bookingsData?.data?.data?.bookings || bookingsData?.data?.bookings || [];
+  const localBookings = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('kemet_simulated_bookings') || '[]');
+    } catch {
+      return [];
+    }
+  })();
+  const allBookingsMap = new Map();
+  bookingsFromAPI.forEach(b => allBookingsMap.set(b._id, b));
+  localBookings.forEach(b => {
+    if (!allBookingsMap.has(b._id)) allBookingsMap.set(b._id, b);
+  });
+  const allBookings = Array.from(allBookingsMap.values());
+
+  const bookedSeatsForDay = travelDate && selectedFlight ? allBookings.filter(b => {
+    const isFlightBooking = (b.booking_type || b.bookingType || b.type) === 'flight';
+    const isThisFlight = (b.reference_id?._id || b.reference_id) === selectedFlight._id;
+    const isThisDay = b.dates?.start && b.dates.start.startsWith(travelDate);
+    return isFlightBooking && isThisFlight && isThisDay && b.status !== 'cancelled';
+  }).reduce((acc, curr) => acc + (curr.guests || curr.passengers || 1), 0) : 0;
+
+  const currentAvailableSeats = 300 - bookedSeatsForDay;
+
   // Client side filtering for class & budget
   const filteredFlights = flights.filter((f) => {
     const matchesClass = flightClass === 'all' || (f.class || '').toLowerCase() === flightClass.toLowerCase();
@@ -376,10 +406,6 @@ export default function Flights() {
                               <span className="text-sm font-bold text-gold-500">$</span>
                               <span className="text-3xl font-serif font-black text-navy-900 leading-none">{f.price}</span>
                             </div>
-                            <span className="text-[9px] font-semibold text-emerald-500 mt-1 flex items-center space-x-1">
-                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                              <span>{f.seatsAvailable} seats left</span>
-                            </span>
                           </div>
 
                           <button
@@ -499,17 +525,31 @@ export default function Flights() {
               </div>
 
               {/* Available Seats */}
-              <div className="flex items-center space-x-4">
-                <svg className="h-8 w-8 text-[#c1a249] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M7 4h2l3 9h6a1 1 0 011 1v1H9.5a1 1 0 01-1-.7L7 4.5A0.5 0.5 0 017 4z" />
-                  <path d="M11 9h5a1 1 0 011 1v0.5a1 1 0 01-1 1H11" />
-                  <path d="M10 15v3M15 15v3" />
-                </svg>
-                <div className="text-left">
-                  <span className="text-gray-500 block text-xs">Available Seats:</span>
-                  <span className="font-bold text-emerald-600 text-sm block mt-0.5">{selectedFlight.seatsAvailable} free</span>
+              {travelDate ? (
+                <div className="flex items-center space-x-4">
+                  <svg className="h-8 w-8 text-[#c1a249] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M7 4h2l3 9h6a1 1 0 011 1v1H9.5a1 1 0 01-1-.7L7 4.5A0.5 0.5 0 017 4z" />
+                    <path d="M11 9h5a1 1 0 011 1v0.5a1 1 0 01-1 1H11" />
+                    <path d="M10 15v3M15 15v3" />
+                  </svg>
+                  <div className="text-left">
+                    <span className="text-gray-500 block text-xs">Available Seats:</span>
+                    <span className="font-bold text-emerald-600 text-sm block mt-0.5">{Math.max(0, currentAvailableSeats - passengers)} free</span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center space-x-4 opacity-50">
+                  <svg className="h-8 w-8 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M7 4h2l3 9h6a1 1 0 011 1v1H9.5a1 1 0 01-1-.7L7 4.5A0.5 0.5 0 017 4z" />
+                    <path d="M11 9h5a1 1 0 011 1v0.5a1 1 0 01-1 1H11" />
+                    <path d="M10 15v3M15 15v3" />
+                  </svg>
+                  <div className="text-left">
+                    <span className="text-gray-500 block text-xs">Available Seats:</span>
+                    <span className="font-bold text-gray-400 text-sm block mt-0.5">Select a date</span>
+                  </div>
+                </div>
+              )}
 
             </div>
 
@@ -543,7 +583,7 @@ export default function Flights() {
                       type="number"
                       required
                       min={1}
-                      max={selectedFlight.seatsAvailable || 10}
+                      max={currentAvailableSeats}
                       value={passengers}
                       onChange={(e) => setPassengers(Math.max(1, parseInt(e.target.value) || 1))}
                       className="pl-12 w-full p-3.5 border border-gray-300 focus:border-[#c1a249] focus:ring-1 focus:ring-[#c1a249] rounded-xl focus:outline-none font-semibold text-gray-800 bg-white"
