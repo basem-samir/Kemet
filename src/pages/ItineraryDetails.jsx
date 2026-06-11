@@ -48,17 +48,13 @@ export default function ItineraryDetails() {
         <div 
           className="absolute inset-0 z-0"
           style={{
-            backgroundImage: `url(${template.imageCover || 'https://images.unsplash.com/photo-1539650116574-8efeb43e2750?auto=format&fit=crop&w=1920&q=80'})`,
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url(${template.imageCover || 'https://images.unsplash.com/photo-1539650116574-8efeb43e2750?auto=format&fit=crop&w=1920&q=80'})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
         />
 
-        {/* Central Ankh */}
-        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-10 opacity-80 drop-shadow-2xl">
-          <span className="text-[#c1a249] text-8xl md:text-[140px] leading-none select-none drop-shadow-lg">☥</span>
-        </div>
-        
+
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 md:pb-24 flex justify-between items-end">
           <div className="space-y-4 max-w-3xl">
             <div className="flex items-center space-x-3 text-xs font-bold uppercase tracking-[0.2em] text-[#8A792E]">
@@ -69,7 +65,7 @@ export default function ItineraryDetails() {
             <motion.h1 
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-5xl sm:text-6xl md:text-[5rem] font-serif font-black tracking-widest text-[#1a1612] uppercase leading-[1.1]"
+              className="text-5xl sm:text-6xl md:text-[5rem] font-serif font-black tracking-widest !text-white uppercase leading-[1.1] drop-shadow-lg"
             >
               {template.title}
             </motion.h1>
