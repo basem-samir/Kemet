@@ -6,7 +6,7 @@ import { DollarSign, ArrowUpRight, ArrowDownRight, Clock, Building2, Plane, Land
 export default function AdminCommissionDashboard() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [withdrawMethod, setWithdrawMethod] = useState('paypal');
+  const [withdrawMethod, setWithdrawMethod] = useState('card');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawDetails, setWithdrawDetails] = useState('');
   const [withdrawalsPage, setWithdrawalsPage] = useState(1);
@@ -273,28 +273,14 @@ export default function AdminCommissionDashboard() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Withdrawal Method</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className={`border rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${withdrawMethod === 'paypal' ? 'border-navy-500 bg-navy-50 ring-2 ring-navy-200' : 'border-gray-200 hover:border-navy-300'}`}>
-                    <input type="radio" name="method" value="paypal" checked={withdrawMethod === 'paypal'} onChange={(e) => setWithdrawMethod(e.target.value)} className="sr-only" />
-                    <span className="font-bold text-sm text-navy-800">PayPal</span>
-                  </label>
-                  <label className={`border rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${withdrawMethod === 'card' ? 'border-navy-500 bg-navy-50 ring-2 ring-navy-200' : 'border-gray-200 hover:border-navy-300'}`}>
-                    <input type="radio" name="method" value="card" checked={withdrawMethod === 'card'} onChange={(e) => setWithdrawMethod(e.target.value)} className="sr-only" />
-                    <span className="font-bold text-sm text-navy-800">Bank Card</span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
                 <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">
-                  {withdrawMethod === 'paypal' ? 'PayPal Email' : 'Card Last 4 Digits'}
+                  Card Last 4 Digits
                 </label>
                 <input
-                  type={withdrawMethod === 'paypal' ? 'email' : 'text'}
+                  type="text"
                   value={withdrawDetails}
                   onChange={(e) => setWithdrawDetails(e.target.value)}
-                  placeholder={withdrawMethod === 'paypal' ? 'admin@example.com' : 'e.g., 4242'}
+                  placeholder="e.g., 4242"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-500 focus:outline-none"
                   required
                 />

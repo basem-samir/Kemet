@@ -145,7 +145,6 @@ export const reviewsAPI = {
 
 export const paymentAPI = {
   createPaymentIntent: (data) => api.post('/payment/create-payment-intent', data),
-  createPaypalOrder: (data) => api.post('/payment/paypal-order', data),
   captureOrder: (data) => api.post('/payment/capture-order', data),
 };
 

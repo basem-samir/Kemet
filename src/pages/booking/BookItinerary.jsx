@@ -205,7 +205,7 @@ export default function BookItinerary() {
 
           <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-[10px] text-gray-400 space-y-2 flex items-start space-x-2">
             <Shield className="h-5 w-5 text-gold-600 shrink-0" />
-            <span>Secure 256-bit SSL transaction. Fully integrated with international processing cards, Stripe and PayPal.</span>
+            <span>Secure 256-bit SSL transaction. Fully integrated with international processing cards and Stripe.</span>
           </div>
         </div>
 
