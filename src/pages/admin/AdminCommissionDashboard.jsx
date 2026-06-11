@@ -6,7 +6,7 @@ import { DollarSign, ArrowUpRight, ArrowDownRight, Clock, Building2, Plane, Land
 export default function AdminCommissionDashboard() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [withdrawMethod, setWithdrawMethod] = useState('card');
+  const [withdrawMethod, setWithdrawMethod] = useState('paypal');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawDetails, setWithdrawDetails] = useState('');
   const [withdrawalsPage, setWithdrawalsPage] = useState(1);
@@ -20,18 +20,25 @@ export default function AdminCommissionDashboard() {
 
   const dashboardData = data?.data?.data || null;
 
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
   const withdrawMutation = useMutation({
     mutationFn: (payload) => adminAPI.requestWithdrawal(payload),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries(['commissionDashboard']);
       queryClient.invalidateQueries(['adminStats']);
-      setIsModalOpen(false);
       setWithdrawAmount('');
       setWithdrawDetails('');
-      alert('Withdrawal processed successfully!');
+      setSuccessMessage(`Success! Funds transferred. Transaction ID: ${res.data?.data?.withdrawal?.transactionId || 'Confirmed'}`);
+      setTimeout(() => {
+        setSuccessMessage('');
+        setIsModalOpen(false);
+      }, 4000);
     },
     onError: (error) => {
-      alert(error.response?.data?.message || 'Failed to process withdrawal');
+      setErrorMessage(error.response?.data?.message || 'Failed to process official payout API');
+      setTimeout(() => setErrorMessage(''), 5000);
     },
   });
 
@@ -152,7 +159,7 @@ export default function AdminCommissionDashboard() {
                 const indexOfLastItem = withdrawalsPage * itemsPerPage;
                 const indexOfFirstItem = indexOfLastItem - itemsPerPage;
                 const currentItems = dashboardData.recentWithdrawals.slice(indexOfFirstItem, indexOfLastItem);
-                
+
                 return (
                   <>
                     {currentItems.map((w) => (
@@ -171,7 +178,7 @@ export default function AdminCommissionDashboard() {
                         </div>
                       </div>
                     ))}
-                    
+
                     {totalPages > 1 && (
                       <div className="flex justify-between items-center border-t border-gray-150 pt-4 mt-2">
                         <div className="text-[10px] text-gray-500 font-medium">
@@ -209,7 +216,7 @@ export default function AdminCommissionDashboard() {
                 const indexOfLastItem = earningsPage * itemsPerPage;
                 const indexOfFirstItem = indexOfLastItem - itemsPerPage;
                 const currentItems = dashboardData.recentBookings.slice(indexOfFirstItem, indexOfLastItem);
-                
+
                 return (
                   <>
                     {currentItems.map((b) => (
@@ -231,7 +238,7 @@ export default function AdminCommissionDashboard() {
                         </div>
                       </div>
                     ))}
-                    
+
                     {totalPages > 1 && (
                       <div className="flex justify-between items-center border-t border-gray-150 pt-4 mt-2">
                         <div className="text-[10px] text-gray-500 font-medium">
@@ -260,13 +267,24 @@ export default function AdminCommissionDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-navy-900 text-white">
-              <h3 className="text-lg font-bold font-serif text-gold-500">Withdraw Funds</h3>
+              <h3 className="text-lg font-bold font-serif !text-white">Withdraw Funds</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white transition-colors">
                 <XCircle className="h-5 w-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleWithdrawSubmit} className="p-6 space-y-4">
+              {successMessage && (
+                <div className="p-3 mb-4 text-sm text-emerald-800 bg-emerald-100 border border-emerald-200 rounded-lg">
+                  {successMessage}
+                </div>
+              )}
+              {errorMessage && (
+                <div className="p-3 mb-4 text-sm text-red-800 bg-red-100 border border-red-200 rounded-lg">
+                  {errorMessage}
+                </div>
+              )}
+
               <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 flex justify-between items-center text-sm">
                 <span className="text-emerald-800 font-medium">Available Balance</span>
                 <span className="text-emerald-700 font-bold font-serif">${dashboardData.availableBalance.toFixed(2)}</span>
@@ -274,13 +292,53 @@ export default function AdminCommissionDashboard() {
 
               <div>
                 <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">
-                  Card Last 4 Digits
+                  Withdrawal Method
+                </label>
+                <select
+                  value={withdrawMethod}
+                  onChange={(e) => {
+                    setWithdrawMethod(e.target.value);
+                    setWithdrawDetails('');
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-500 focus:outline-none mb-4"
+                >
+                  <option value="paypal">PayPal</option>
+                  <option value="stripe">Bank Transfer (Stripe)</option>
+                  <option value="card">Bank Card</option>
+                </select>
+
+                <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">
+                  {withdrawMethod === 'paypal' ? 'PayPal Email Address' : withdrawMethod === 'stripe' ? 'IBAN Number' : 'Full Bank Card Number'}
                 </label>
                 <input
                   type="text"
                   value={withdrawDetails}
-                  onChange={(e) => setWithdrawDetails(e.target.value)}
-                  placeholder="e.g., 4242"
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (withdrawMethod === 'card') {
+                      val = val.replace(/\D/g, '');
+                      val = val.replace(/(\d{4})(?=\d)/g, '$1 ');
+                    } else if (withdrawMethod === 'stripe') {
+                      let raw = val.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                      let clean = '';
+                      for (let i = 0; i < raw.length; i++) {
+                        let char = raw[i];
+                        let pos = clean.length;
+                        if (pos === 0) { if (char === 'E') clean += char; }
+                        else if (pos === 1) { if (char === 'G') clean += char; }
+                        else if (pos === 2 || pos === 3) { if (/\d/.test(char)) clean += char; }
+                        else if (pos >= 4 && pos <= 7) { if (/[A-Z0-9]/.test(char)) clean += char; }
+                        else if (pos >= 8 && pos <= 28) { if (/\d/.test(char)) clean += char; }
+                        if (clean.length === 29) break;
+                      }
+                      val = clean.replace(/(.{4})(?=.)/g, '$1 ');
+                    }
+                    setWithdrawDetails(val);
+                  }}
+                  placeholder={withdrawMethod === 'paypal' ? 'e.g., admin@paypal.com' : withdrawMethod === 'stripe' ? 'e.g., EG12 CIBG 0000 1234...' : 'e.g., 4111 1111 1111 1111'}
+                  minLength={withdrawMethod === 'card' ? 19 : withdrawMethod === 'stripe' ? 36 : undefined}
+                  maxLength={withdrawMethod === 'card' ? 19 : withdrawMethod === 'stripe' ? 36 : undefined}
+                  pattern={withdrawMethod === 'card' ? '[0-9 ]+' : withdrawMethod === 'stripe' ? '^EG[0-9]{2} [A-Z0-9]{4} [0-9]{4} [0-9]{4} [0-9]{4} [0-9]{4} [0-9]{4} [0-9]$' : undefined}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-500 focus:outline-none"
                   required
                 />
