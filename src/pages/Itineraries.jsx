@@ -126,7 +126,13 @@ export default function Itineraries() {
                 type="text"
                 placeholder="Search Tours..."
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (/^[a-zA-Z\s]*$/.test(val)) {
+                    setSearch(val);
+                    setCurrentPage(1);
+                  }
+                }}
                 className="pl-11 w-full py-2.5 px-4 bg-[#F4EFE6] border border-[#E5D5B5] rounded-full focus:outline-none focus:ring-1 focus:ring-[#c1a249] text-xs font-semibold text-gray-900 placeholder-gray-400 transition"
               />
             </div>

@@ -87,7 +87,13 @@ export default function Home() {
                 type="text"
                 placeholder="Search destinations, tours..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  // Regex to allow only alphabetical characters and spaces
+                  if (/^[a-zA-Z\s]*$/.test(val)) {
+                    setSearchQuery(val);
+                  }
+                }}
                 className="w-full !bg-transparent !border-none focus:outline-none focus:ring-0 flex-grow py-3 pl-6 pr-4 text-gray-700 font-sans text-sm"
                 style={{ backgroundColor: 'transparent' }}
               />

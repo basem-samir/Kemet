@@ -4,6 +4,7 @@ import { useAuthStore } from '../../store/authStore';
 import { User, Mail, Globe, Phone, Tag, Check, Loader2, AlertCircle, CheckCircle, Trash2, ShieldAlert, CreditCard, Lock, Wallet, Camera, ImagePlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_BASE } from '../../api/endpoints';
+import { validateField } from '../../utils/validation';
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function Profile() {
   const [showUpdateInfoModal, setShowUpdateInfoModal] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [formErrors, setFormErrors] = useState({});
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [pendingAvatarFile, setPendingAvatarFile] = useState(null);
   const [pendingAvatarUrl, setPendingAvatarUrl] = useState(null);
@@ -99,7 +101,26 @@ export default function Profile() {
   }, [user, clearError]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if ((name === 'full_name' || name === 'nationality') && !/^[a-zA-Z\s]*$/.test(value)) {
+      return;
+    }
+    if (name === 'interestsStr' && !/^[a-zA-Z\s,]*$/.test(value)) {
+      return;
+    }
+
+    setFormData({ ...formData, [name]: value });
+
+    // Real-time validation
+    let validationType = name;
+    if (name === 'full_name' || name === 'nationality') validationType = 'name';
+    if (name === 'phone_number') validationType = 'phone';
+    
+    if (['full_name', 'nationality', 'phone_number'].includes(name)) {
+      const error = validateField(validationType, value);
+      setFormErrors(prev => ({ ...prev, [name]: error }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -107,6 +128,19 @@ export default function Profile() {
     setLoading(true);
     setSuccessMsg('');
     setErrorMsg('');
+
+    // Pre-submit validation
+    const errors = {
+      full_name: validateField('name', formData.full_name),
+      phone_number: validateField('phone', formData.phone_number),
+      nationality: validateField('name', formData.nationality),
+    };
+
+    if (Object.values(errors).some(err => err)) {
+      setFormErrors(errors);
+      setLoading(false);
+      return;
+    }
 
     try {
       const interests = formData.interestsStr
@@ -391,10 +425,11 @@ export default function Profile() {
                         required
                         value={formData.full_name}
                         onChange={handleChange}
-                        className="pl-9 w-full p-2.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-gold-500 focus:outline-none bg-gray-50/50"
+                        className={`pl-9 w-full p-2.5 border ${formErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg text-xs focus:ring-2 focus:ring-gold-500 focus:outline-none bg-gray-50/50`}
                         placeholder="Tutankhamun"
                       />
                     </div>
+                    {formErrors.full_name && <p className="text-red-500 text-[10px]">{formErrors.full_name}</p>}
                   </div>
 
                   {/* Email (Read-Only) */}
@@ -421,10 +456,11 @@ export default function Profile() {
                         name="nationality"
                         value={formData.nationality}
                         onChange={handleChange}
-                        className="pl-9 w-full p-2.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-gold-500 focus:outline-none bg-gray-50/50"
+                        className={`pl-9 w-full p-2.5 border ${formErrors.nationality ? 'border-red-500' : 'border-gray-300'} rounded-lg text-xs focus:ring-2 focus:ring-gold-500 focus:outline-none bg-gray-50/50`}
                         placeholder="e.g. British"
                       />
                     </div>
+                    {formErrors.nationality && <p className="text-red-500 text-[10px]">{formErrors.nationality}</p>}
                   </div>
 
                   {/* Phone Number */}
@@ -437,10 +473,11 @@ export default function Profile() {
                         name="phone_number"
                         value={formData.phone_number}
                         onChange={handleChange}
-                        className="pl-9 w-full p-2.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-gold-500 focus:outline-none bg-gray-50/50"
+                        className={`pl-9 w-full p-2.5 border ${formErrors.phone_number ? 'border-red-500' : 'border-gray-300'} rounded-lg text-xs focus:ring-2 focus:ring-gold-500 focus:outline-none bg-gray-50/50`}
                         placeholder="+44 77..."
                       />
                     </div>
+                    {formErrors.phone_number && <p className="text-red-500 text-[10px]">{formErrors.phone_number}</p>}
                   </div>
 
                   {/* Preferred Language */}

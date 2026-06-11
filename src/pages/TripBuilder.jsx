@@ -63,6 +63,7 @@ export default function TripBuilder() {
   const governorates = govsData?.data?.data?.governorates || govsData?.data?.governorates || [];
   const hotels = hotelsData?.data?.data?.hotels || hotelsData?.data?.hotels || hotelsData?.data || [];
   const landmarks = landmarksData?.data?.data?.landmarks || landmarksData?.data?.landmarks || landmarksData?.data || [];
+  const uniqueCategories = [...new Set(landmarks.map(l => l.category))].filter(Boolean).sort();
 
   // ==========================================
   // AI MODE WIZARD STATES
@@ -983,7 +984,12 @@ export default function TripBuilder() {
                     <input
                       type="text"
                       value={manualTitle}
-                      onChange={(e) => setManualTitle(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^[a-zA-Z\s]*$/.test(val)) {
+                          setManualTitle(val);
+                        }
+                      }}
                       placeholder="e.g. My Cairo & Luxor Tour"
                       className="w-full p-2.5 rounded-md text-xs font-semibold text-navy-900 focus:outline-none border border-gold-500/20 shadow-inner"
                       style={{ backgroundColor: '#EBE2CD' }}
@@ -1121,14 +1127,16 @@ export default function TripBuilder() {
                           value={manualSchedule[manualActiveDay - 1]?.description || ''}
                           onChange={(e) => {
                             const val = e.target.value;
-                            setManualSchedule((prev) =>
-                              prev.map((dayPlan) => {
-                                if (dayPlan.day === manualActiveDay) {
-                                  return { ...dayPlan, description: val };
-                                }
-                                return dayPlan;
-                              })
-                            );
+                            if (/^[a-zA-Z\s]*$/.test(val)) {
+                              setManualSchedule((prev) =>
+                                prev.map((dayPlan) => {
+                                  if (dayPlan.day === manualActiveDay) {
+                                    return { ...dayPlan, description: val };
+                                  }
+                                  return dayPlan;
+                                })
+                              );
+                            }
                           }}
                           className="w-full p-2.5 rounded-md text-xs font-semibold text-navy-900 focus:outline-none border border-gold-500/20 shadow-inner"
                           style={{ backgroundColor: '#EBE2CD' }}
@@ -1204,7 +1212,12 @@ export default function TripBuilder() {
                         type="text"
                         placeholder="Search by name..."
                         value={manualSearchQuery}
-                        onChange={(e) => setManualSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (/^[a-zA-Z\s]*$/.test(val)) {
+                            setManualSearchQuery(val);
+                          }
+                        }}
                         className="pl-9 w-full p-2 rounded-md text-xs font-semibold focus:outline-none border border-gold-500/20 shadow-inner"
                         style={{ backgroundColor: '#EBE2CD' }}
                       />
@@ -1234,12 +1247,11 @@ export default function TripBuilder() {
                           style={{ backgroundColor: '#EBE2CD' }}
                         >
                           <option value="all">All</option>
-                          <option value="pharaonic">Pharaonic</option>
-                          <option value="islamic">Islamic</option>
-                          <option value="coptic">Coptic</option>
-                          <option value="temple">Temples</option>
-                          <option value="museum">Museums</option>
-                          <option value="beach">Beaches</option>
+                          {types.map(t => {
+                            const value = t.name.toLowerCase().replace(' tourism', '').replace(/ /g, '_');
+                            const label = t.name.replace(' Tourism', '');
+                            return <option key={t._id} value={value}>{label}</option>;
+                          })}
                         </select>
                       </div>
                     </div>

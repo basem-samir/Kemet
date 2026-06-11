@@ -411,7 +411,7 @@ export default function HotelDetails() {
                     onChange={(e) => setGuestsCount(e.target.value)}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C1A249] text-sm"
                   >
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                    {[1, 2, 3].map((n) => (
                       <option key={n} value={n}>{n} Guest{n > 1 ? 's' : ''}</option>
                     ))}
                   </select>

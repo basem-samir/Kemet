@@ -137,7 +137,13 @@ export default function Hotels() {
                         type="text"
                         placeholder="Hotel or city name..."
                         value={search}
-                        onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (/^[a-zA-Z\s]*$/.test(val)) {
+                            setSearch(val);
+                            setCurrentPage(1);
+                          }
+                        }}
                         className="pl-12 w-full p-3.5 border border-[#c1a249] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#c1a249] text-xs font-semibold transition bg-transparent placeholder-gray-400"
                         style={{ color: '#1a1612' }}
                       />

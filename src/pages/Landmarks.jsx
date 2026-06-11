@@ -191,7 +191,13 @@ export default function Landmarks() {
                       type="text"
                       placeholder="Search landmarks..."
                       value={search}
-                      onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^[a-zA-Z\s]*$/.test(val)) {
+                          setSearch(val);
+                          setCurrentPage(1);
+                        }
+                      }}
                       className="pl-11 w-full p-3.5 border border-gold-500/10 rounded-full focus:outline-none focus:ring-2 focus:ring-gold-500/50 text-xs font-semibold transition"
                       style={{ backgroundColor: '#FAF5E8', color: '#1a1612' }}
                     />

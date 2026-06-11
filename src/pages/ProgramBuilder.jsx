@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
-import { landmarksAPI, governoratesAPI, itinerariesAPI, hotelsAPI, bookingsAPI } from '../api/endpoints';
+import { landmarksAPI, governoratesAPI, itinerariesAPI, hotelsAPI, bookingsAPI, tourismTypesAPI } from '../api/endpoints';
 import { useAuthStore } from '../store/authStore';
 import { Compass, Calendar, DollarSign, MapPin, Sparkles, Building2, Plus, Trash2, ArrowRight, Save, Search, AlertCircle, Check, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -48,6 +48,11 @@ export default function ProgramBuilder() {
     queryFn: () => landmarksAPI.getAll({ limit: 1000 }),
   });
 
+  const { data: typesData } = useQuery({
+    queryKey: ['tourismTypes'],
+    queryFn: () => tourismTypesAPI.getAll({ limit: 1000 }),
+  });
+
   const { data: govsData } = useQuery({
     queryKey: ['governorates'],
     queryFn: () => governoratesAPI.getAll({ limit: 1000 }),
@@ -59,6 +64,7 @@ export default function ProgramBuilder() {
   });
 
   const landmarks = landmarksData?.data?.data?.landmarks || landmarksData?.data?.landmarks || landmarksData?.data || [];
+  const types = typesData?.data?.data?.types || typesData?.data?.types || [];
   const governorates = govsData?.data?.data?.governorates || govsData?.data?.governorates || [];
   const hotels = hotelsData?.data?.data?.hotels || hotelsData?.data?.hotels || hotelsData?.data || [];
 
@@ -325,7 +331,12 @@ export default function ProgramBuilder() {
                   <input
                     type="text"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^[a-zA-Z\s]*$/.test(val)) {
+                        setTitle(val);
+                      }
+                    }}
                     placeholder="e.g. My Cairo & Luxor Tour"
                     className="w-full p-2.5 bg-gray-50/50 border border-gray-250 rounded-xl text-xs font-semibold text-navy-900 focus:ring-2 focus:ring-gold-500 focus:bg-white focus:outline-none"
                   />
@@ -518,14 +529,16 @@ export default function ProgramBuilder() {
                       value={schedule[activeDay - 1]?.description || ''}
                       onChange={(e) => {
                         const val = e.target.value;
-                        setSchedule((prev) =>
-                          prev.map((dayPlan) => {
-                            if (dayPlan.day === activeDay) {
-                              return { ...dayPlan, description: val };
-                            }
-                            return dayPlan;
-                          })
-                        );
+                        if (/^[a-zA-Z\s]*$/.test(val)) {
+                          setSchedule((prev) =>
+                            prev.map((dayPlan) => {
+                              if (dayPlan.day === activeDay) {
+                                return { ...dayPlan, description: val };
+                              }
+                              return dayPlan;
+                            })
+                          );
+                        }
                       }}
                       placeholder="e.g. Visit pyramids and local bazaar"
                       className="w-full p-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-xs font-semibold text-navy-900 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:bg-white"
@@ -632,7 +645,12 @@ export default function ProgramBuilder() {
                     type="text"
                     placeholder="Search by name..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^[a-zA-Z\s]*$/.test(val)) {
+                        setSearchQuery(val);
+                      }
+                    }}
                     className="pl-8.5 w-full p-2 border border-gray-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-gold-500 focus:bg-white"
                   />
                 </div>
@@ -663,12 +681,11 @@ export default function ProgramBuilder() {
                     className="w-full p-2 border border-gray-200 rounded-lg text-xs font-bold text-navy-900 focus:outline-none"
                   >
                     <option value="all">🏺 All</option>
-                    <option value="pharaonic">Pharaonic</option>
-                    <option value="islamic">Islamic</option>
-                    <option value="coptic">Coptic</option>
-                    <option value="temple">Temples</option>
-                    <option value="museum">Museums</option>
-                    <option value="beach">Beaches</option>
+                    {types.map(t => {
+                      const value = t.name.toLowerCase().replace(' tourism', '').replace(/ /g, '_');
+                      const label = t.name.replace(' Tourism', '');
+                      return <option key={t._id} value={value}>{label}</option>;
+                    })}
                   </select>
                 </div>
               </div>

@@ -72,6 +72,7 @@ export default function Flights() {
   });
 
   const flights = flightsData?.data?.data?.flights || flightsData?.data?.flights || [];
+  const uniqueAirlines = [...new Set(flights.map(f => f.airline))].filter(Boolean).sort();
 
   const { data: bookingsData } = useQuery({
     queryKey: ['allBookings'],
@@ -220,18 +221,24 @@ export default function Flights() {
             </div>
 
             <div className={`transition-opacity duration-500 ease-in-out ${isFiltersOpen ? 'opacity-100' : 'opacity-0 hidden'} space-y-6 pt-4 flex-1 overflow-y-auto overflow-x-hidden`}>
-              {/* Airline Search Input */}
+              {/* Airline Search Dropdown */}
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Airline Name</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="e.g. EgyptAir"
+                  <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#e11d48] text-[10px] pointer-events-none z-10">✈️</span>
+                  <select
                     value={airlineSearch}
                     onChange={(e) => { setAirlineSearch(e.target.value); setCurrentPage(1); }}
-                    className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold text-navy-900 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:bg-white transition-colors"
-                  />
+                    className="w-full pl-10 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold text-navy-900 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:bg-white transition-colors appearance-none cursor-pointer"
+                  >
+                    <option value="">All Airlines</option>
+                    {uniqueAirlines.map(airline => (
+                      <option key={airline} value={airline}>{airline}</option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center text-gray-500 z-10">
+                    <ChevronDown className="h-4 w-4" />
+                  </div>
                 </div>
               </div>
 
@@ -246,7 +253,7 @@ export default function Flights() {
                   >
                     <option value="">🛫 Any Origin</option>
                     {AIRPORTS.map((ap) => (
-                      <option key={ap.code} value={ap.code}>{ap.name}</option>
+                      <option key={ap.code} value={ap.code} disabled={ap.code === destination}>{ap.name}</option>
                     ))}
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
@@ -266,7 +273,7 @@ export default function Flights() {
                   >
                     <option value="">🛬 Any Destination</option>
                     {AIRPORTS.map((ap) => (
-                      <option key={ap.code} value={ap.code}>{ap.name}</option>
+                      <option key={ap.code} value={ap.code} disabled={ap.code === origin}>{ap.name}</option>
                     ))}
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">

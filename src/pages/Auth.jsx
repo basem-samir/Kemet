@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { Compass, Mail, Lock, User, Globe, Phone, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { API_BASE } from '../api/endpoints';
+import { validateField } from '../utils/validation';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,6 +16,7 @@ export default function Auth() {
     phone_number: '',
   });
   const [errorMsg, setErrorMsg] = useState('');
+  const [formErrors, setFormErrors] = useState({});
   const [loading, setLoading] = useState(false);
   
   const { login, register, fetchCurrentUser } = useAuthStore();
@@ -33,7 +35,13 @@ export default function Auth() {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    // Real-time validation
+    const validationType = name === 'full_name' ? 'name' : name;
+    const error = validateField(validationType, value);
+    setFormErrors(prev => ({ ...prev, [name]: error }));
   };
 
   const handleGoogleAuth = () => {
@@ -43,6 +51,20 @@ export default function Auth() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+
+    // Pre-submit validation
+    const errors = {};
+    if (!isLogin) {
+      errors.full_name = validateField('name', formData.full_name);
+    }
+    errors.email = validateField('email', formData.email);
+    errors.password = validateField('password', formData.password);
+
+    if (Object.values(errors).some(err => err)) {
+      setFormErrors(errors);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -115,10 +137,11 @@ export default function Auth() {
                     required
                     value={formData.full_name}
                     onChange={handleChange}
-                    className="pl-10 w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none"
+                    className={`pl-10 w-full px-4 py-2.5 bg-gray-50 border ${formErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none`}
                     placeholder="Tutankhamun"
                   />
                 </div>
+                {formErrors.full_name && <p className="text-red-500 text-[10px] mt-1">{formErrors.full_name}</p>}
               </div>
 
 
@@ -135,10 +158,11 @@ export default function Auth() {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="pl-10 w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none"
+                className={`pl-10 w-full px-4 py-2.5 bg-gray-50 border ${formErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none`}
                 placeholder="you@example.com"
               />
             </div>
+            {formErrors.email && <p className="text-red-500 text-[10px] mt-1">{formErrors.email}</p>}
           </div>
 
           <div>
@@ -151,10 +175,11 @@ export default function Auth() {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="pl-10 w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none"
+                className={`pl-10 w-full px-4 py-2.5 bg-gray-50 border ${formErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none`}
                 placeholder="••••••••"
               />
             </div>
+            {formErrors.password && <p className="text-red-500 text-[10px] mt-1">{formErrors.password}</p>}
           </div>
 
           <button
