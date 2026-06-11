@@ -376,14 +376,16 @@ export default function Profile() {
             <span>Update Information</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            className="text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 font-bold py-2.5 px-6 rounded-lg transition duration-200 text-xs flex items-center space-x-1.5 justify-center"
-          >
-            <Trash2 className="h-4 w-4" />
-            <span>Delete Account</span>
-          </button>
+          {user?.role !== 'admin' && (
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 font-bold py-2.5 px-6 rounded-lg transition duration-200 text-xs flex items-center space-x-1.5 justify-center"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Delete Account</span>
+            </button>
+          )}
         </div>
       </div>
 
