@@ -7,6 +7,7 @@ export default function AdminUsers() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [confirmUser, setConfirmUser] = useState(null); // { id: string, name: string, isBanned: boolean }
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState(null); // { id: string, name: string }
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'active', 'banned'
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -22,6 +23,14 @@ export default function AdminUsers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
       setConfirmUser(null);
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: (id) => adminAPI.deleteUser(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      setConfirmDeleteUser(null);
     },
   });
 
@@ -137,17 +146,26 @@ export default function AdminUsers() {
                     <td className="px-6 py-4">{u.nationality || 'N/A'}</td>
                     <td className="px-6 py-4 text-right">
                       {u.role !== 'admin' && (
-                        <button
-                          onClick={() => setConfirmUser({ id: u._id, name, isBanned: !u.isBanned })}
-                          disabled={banUserMutation.isPending}
-                          className={`px-3 py-1.5 rounded-lg font-bold text-[10px] shadow-sm transition ${
-                            u.isBanned 
-                              ? 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100' 
-                              : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
-                          }`}
-                        >
-                          {u.isBanned ? 'Unban User' : 'Ban User'}
-                        </button>
+                        <div className="flex justify-end space-x-2">
+                          <button
+                            onClick={() => setConfirmUser({ id: u._id, name, isBanned: !u.isBanned })}
+                            disabled={banUserMutation.isPending}
+                            className={`px-3 py-1.5 rounded-lg font-bold text-[10px] shadow-sm transition ${
+                              u.isBanned 
+                                ? 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100' 
+                                : 'bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100'
+                            }`}
+                          >
+                            {u.isBanned ? 'Unban' : 'Ban'}
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteUser({ id: u._id, name })}
+                            disabled={deleteUserMutation.isPending}
+                            className="px-3 py-1.5 rounded-lg font-bold text-[10px] shadow-sm transition bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -220,6 +238,43 @@ export default function AdminUsers() {
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
                   <span>Yes, Confirm</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {confirmDeleteUser && (
+        <div className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl border border-gold-500/20 max-w-sm w-full p-6 shadow-xl space-y-4 animate-in fade-in zoom-in duration-200 text-left">
+            <div className="flex items-center space-x-3 text-red-600">
+              <ShieldAlert className="h-6 w-6 shrink-0" />
+              <h4 className="font-serif font-bold text-navy-500 text-base">
+                Delete Platform User
+              </h4>
+            </div>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Are you sure you want to <strong>delete</strong> user <strong>{confirmDeleteUser.name}</strong>? 
+              This action is permanent and cannot be undone.
+            </p>
+            <div className="flex space-x-3 justify-end text-xs pt-2">
+              <button
+                onClick={() => setConfirmDeleteUser(null)}
+                className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-600 font-bold rounded-lg transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteUserMutation.mutate(confirmDeleteUser.id)}
+                disabled={deleteUserMutation.isPending}
+                className="px-4 py-2 text-white font-bold rounded-lg shadow transition flex items-center space-x-1 bg-red-600 hover:bg-red-700"
+              >
+                {deleteUserMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <span>Yes, Delete</span>
                 )}
               </button>
             </div>
