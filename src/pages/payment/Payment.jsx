@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { bookingsAPI, paymentAPI } from '../../api/endpoints';
 import { CreditCard, Shield, Lock, Wallet, AlertCircle, Compass, ArrowLeft, Loader2, CheckCircle, Calendar, Home, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -212,9 +213,22 @@ export default function Payment() {
             </div>
           ) : (
             <>
-
-
-              {payError && (
+              <div className="flex justify-center gap-4 border-b border-gray-100 pb-4 mb-4">
+                <button
+                  onClick={() => setPaymentMethod('card')}
+                  className={`flex-1 py-2 px-4 rounded-lg flex items-center justify-center space-x-2 border transition ${paymentMethod === 'card' ? 'bg-gold-50 border-gold-500 text-gold-700' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span className="text-xs font-bold">Credit Card</span>
+                </button>
+                <button
+                  onClick={() => setPaymentMethod('paypal')}
+                  className={`flex-1 py-2 px-4 rounded-lg flex items-center justify-center space-x-2 border transition ${paymentMethod === 'paypal' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}
+                >
+                  <Wallet className="w-4 h-4" />
+                  <span className="text-xs font-bold">PayPal</span>
+                </button>
+              </div>              {payError && (
                 <div className="text-xs text-red-700 bg-red-50 p-3 rounded-lg border border-red-200">
                   {payError}
                 </div>
@@ -231,9 +245,48 @@ export default function Payment() {
                 </Elements>
               )}
 
-
-
-              <div className="flex items-center justify-center space-x-2 text-[10px] text-gray-400 pt-4 border-t border-gray-100">
+              {paymentMethod === 'paypal' && (
+                <div className="pt-2">
+                  <PayPalScriptProvider options={{ "client-id": import.meta.env.VITE_PAYPAL_CLIENT_ID || "test", currency: "USD" }}>
+                    <PayPalButtons
+                      style={{ layout: "vertical", shape: "rect" }}
+                      createOrder={async () => {
+                        setProcessing(true);
+                        try {
+                          const res = await paymentAPI.createPaypalOrder({
+                            amount: bookingPrice,
+                            booking_id: booking._id,
+                            currency: 'USD'
+                          });
+                          return res.data.data.orderID;
+                        } catch (err) {
+                          handlePayError(err.response?.data?.message || err.message);
+                          throw err;
+                        } finally {
+                          setProcessing(false);
+                        }
+                      }}
+                      onApprove={async (data, actions) => {
+                        setProcessing(true);
+                        try {
+                          await paymentAPI.capturePaypalOrder({
+                            booking_id: booking._id,
+                            orderID: data.orderID
+                          });
+                          handlePaySuccess();
+                        } catch (err) {
+                          handlePayError(err.response?.data?.message || err.message);
+                        } finally {
+                          setProcessing(false);
+                        }
+                      }}
+                      onError={(err) => {
+                        handlePayError("PayPal checkout failed.");
+                      }}
+                    />
+                  </PayPalScriptProvider>
+                </div>
+              )}              <div className="flex items-center justify-center space-x-2 text-[10px] text-gray-400 pt-4 border-t border-gray-100">
                 <Lock className="h-3.5 w-3.5 text-gold-500 shrink-0" />
                 <span>256-Bit SSL Encrypted Connection</span>
               </div>
