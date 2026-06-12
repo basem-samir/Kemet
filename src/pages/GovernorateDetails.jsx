@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { governoratesAPI } from '../api/endpoints';
-import { MapPin, Calendar, Star, Building2, Eye, Compass, ArrowLeft, Search, Clock, Users, Landmark } from 'lucide-react';
+import { MapPin, Calendar, Star, Building2, Eye, Compass, ArrowLeft, Search, Clock, Users, Landmark, CloudSun } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function GovernorateDetails() {
@@ -38,7 +38,7 @@ export default function GovernorateDetails() {
     );
   }
 
-  const { governorate, landmarks = [], hotels = [] } = govDetails.data.data || govDetails.data || {};
+  const { governorate, landmarks = [], hotels = [], weather } = govDetails.data.data || govDetails.data || {};
 
   const filteredLandmarks = landmarks.filter(l => 
     l.name.toLowerCase().includes(landmarkSearchQuery.toLowerCase())
@@ -113,6 +113,19 @@ export default function GovernorateDetails() {
                 <span className="font-bold text-navy-900 uppercase text-sm">{governorate.population || '3.5 MILLION'}</span>
               </div>
             </div>
+            {weather && weather.weather && weather.main && (
+              <div className="flex items-center space-x-4">
+                <div className="bg-orange-400 p-3 rounded-full text-white">
+                  <CloudSun className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block">Weather:</span>
+                  <span className="font-bold text-navy-900 uppercase text-sm">
+                    {Math.round(weather.main.temp)}°C, {weather.weather[0].main}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
