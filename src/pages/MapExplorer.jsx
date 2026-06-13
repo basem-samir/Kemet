@@ -416,7 +416,7 @@ export default function MapExplorer() {
           font-weight: 700;
           font-size: 13px;
           margin: 0;
-          color: #fff;
+          color: #fff !important;
           line-height: 1.3;
         }
         .popup-badge {
@@ -599,7 +599,7 @@ export default function MapExplorer() {
           font-weight: 700;
           font-size: 12px;
           margin: 0;
-          color: #fff;
+          color: #fff !important;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
