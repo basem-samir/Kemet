@@ -9,6 +9,7 @@ import {
   Landmark, Moon, Cross, Umbrella, Fish, Tent, Sailboat, Leaf, Mountain, HeartPulse, Palette, Book, Gem, Home
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import BookingSuccessModal from '../components/BookingSuccessModal';
 
 const getVibeIcon = (name) => {
   const n = name.toLowerCase();
@@ -35,6 +36,7 @@ export default function TripBuilder() {
 
   // Overall Mode: 'ai' or 'manual'
   const [builderMode, setBuilderMode] = useState('ai');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // ==========================================
   // SHARED STATE & QUERIES
@@ -176,8 +178,7 @@ export default function TripBuilder() {
   const bookAiTripMutation = useMutation({
     mutationFn: (data) => bookingsAPI.bookCustomTrip(data),
     onSuccess: (res) => {
-      const booking = res.data.data?.booking || res.data.booking || res.data;
-      navigate(`/payment?bookingId=${booking._id || booking.id}`);
+      setShowSuccessModal(true);
     },
     onError: (err) => {
       setAiBookingError(err.response?.data?.message || 'Failed to book custom trip.');
@@ -328,12 +329,7 @@ export default function TripBuilder() {
   const bookManualTripMutation = useMutation({
     mutationFn: (data) => bookingsAPI.bookCustomTrip(data),
     onSuccess: (res) => {
-      const booking = res.data?.data?.booking || res.data?.booking || res.data;
-      setSuccessMsg('Custom program saved! Initiating booking payment...');
-      setTimeout(() => {
-        setSuccessMsg('');
-        navigate(`/payment?bookingId=${booking._id || booking.id}`);
-      }, 1500);
+      setShowSuccessModal(true);
     },
     onError: (err) => {
       setErrorMsg(err.response?.data?.message || 'Failed to book custom program.');
@@ -936,7 +932,7 @@ export default function TripBuilder() {
                               disabled={bookAiTripMutation.isPending}
                               className="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold py-3 px-4 rounded-xl shadow-lg transition duration-200 text-xs uppercase tracking-widest"
                             >
-                              Proceed to payment
+                              Request Booking
                             </button>
                           </form>
                         </div>
@@ -1313,6 +1309,14 @@ export default function TripBuilder() {
 
         </div>
       </div>
+
+      <BookingSuccessModal 
+        isOpen={showSuccessModal} 
+        onClose={() => {
+          setShowSuccessModal(false);
+          navigate('/dashboard/bookings');
+        }} 
+      />
     </div>
   );
 }

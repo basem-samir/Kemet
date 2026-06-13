@@ -1,11 +1,22 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../api/endpoints';
-import { Loader2, Plane, Building2, Landmark, Calendar } from 'lucide-react';
+import { Loader2, Plane, Building2, Landmark, Calendar, Check, X } from 'lucide-react';
 
 export default function AdminBookings() {
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'pending', 'confirmed', 'completed', 'cancelled'
   const [currentPage, setCurrentPage] = useState(1);
+  const queryClient = useQueryClient();
+
+  const acceptMutation = useMutation({
+    mutationFn: (id) => adminAPI.acceptBooking(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['adminBookings'] }),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (id) => adminAPI.rejectBooking(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['adminBookings'] }),
+  });
 
   const { data: bookingsData, isLoading } = useQuery({
     queryKey: ['adminBookings'],
@@ -84,7 +95,7 @@ export default function AdminBookings() {
                 <th className="px-6 py-4">Type</th>
                 <th className="px-6 py-4">Total Bill</th>
                 <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Payment</th>
+                <th className="px-6 py-4">Payment / Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 text-gray-700 font-medium">
@@ -114,20 +125,41 @@ export default function AdminBookings() {
                     <td className="px-6 py-4 font-bold text-navy-500">${b.totalPrice || 250}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold border ${
-                        b.status === 'confirmed' 
+                        b.status === 'confirmed' || b.status === 'completed'
                           ? 'bg-green-50 text-green-700 border-green-200' 
-                          : b.status === 'cancelled'
+                          : b.status === 'cancelled' || b.status === 'rejected'
                           ? 'bg-red-50 text-red-700 border-red-200'
+                          : b.status === 'accepted'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
                           : 'bg-yellow-50 text-yellow-700 border-yellow-200'
                       }`}>
                         {b.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 capitalize font-semibold">
-                      {b.payment?.status === 'paid' ? (
+                      {b.status === 'pending' ? (
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => acceptMutation.mutate(b._id)}
+                            disabled={acceptMutation.isPending || rejectMutation.isPending}
+                            className="bg-green-500 hover:bg-green-600 text-white p-1 rounded transition"
+                            title="Accept"
+                          >
+                            <Check className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => rejectMutation.mutate(b._id)}
+                            disabled={acceptMutation.isPending || rejectMutation.isPending}
+                            className="bg-red-500 hover:bg-red-600 text-white p-1 rounded transition"
+                            title="Reject"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : b.payment?.status === 'paid' ? (
                         <span className="text-green-600">Paid ({b.payment.method})</span>
                       ) : (
-                        <span className="text-red-500">Unpaid</span>
+                        <span className="text-gray-500">Unpaid</span>
                       )}
                     </td>
                   </tr>

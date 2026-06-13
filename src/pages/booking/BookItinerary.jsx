@@ -5,6 +5,7 @@ import { itinerariesAPI, bookingsAPI } from '../../api/endpoints';
 import { useAuthStore } from '../../store/authStore';
 import { Calendar, Users, MapPin, AlertCircle, ArrowLeft, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
+import BookingSuccessModal from '../../components/BookingSuccessModal';
 
 export default function BookItinerary() {
   const { id } = useParams(); // Template ID
@@ -14,6 +15,7 @@ export default function BookItinerary() {
   const [endDate, setEndDate] = useState('');
   const [guestsCount, setGuestsCount] = useState(1);
   const [bookingError, setBookingError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // We need to fetch the template to get the title, price and details.
   // Wait, templates are loaded by slug, but here we have the template ID.
@@ -32,7 +34,7 @@ export default function BookItinerary() {
     mutationFn: (data) => bookingsAPI.bookItinerary(data),
     onSuccess: (res) => {
       const booking = res.data.data?.booking || res.data.booking || res.data;
-      navigate(`/payment?bookingId=${booking._id || booking.id}`);
+      setShowSuccessModal(true);
     },
     onError: (err) => {
       setBookingError(err.response?.data?.message || 'Failed to create booking.');
@@ -172,7 +174,7 @@ export default function BookItinerary() {
               disabled={bookItineraryMutation.isPending}
               className="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold py-3.5 px-4 rounded-lg shadow-lg hover:shadow-gold-500/20 transition duration-200 text-sm"
             >
-              {bookItineraryMutation.isPending ? 'Reserving...' : 'Proceed to Payment'}
+              {bookItineraryMutation.isPending ? 'Processing...' : 'Request Booking'}
             </button>
           </form>
         </div>
@@ -210,6 +212,14 @@ export default function BookItinerary() {
         </div>
 
       </div>
+
+      <BookingSuccessModal 
+        isOpen={showSuccessModal} 
+        onClose={() => {
+          setShowSuccessModal(false);
+          navigate('/dashboard/bookings');
+        }} 
+      />
     </div>
   );
 }

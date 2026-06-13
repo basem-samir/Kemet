@@ -2,16 +2,37 @@ import { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from 'react-i18next';
-import { Menu, X, Compass, User, LogOut, LayoutDashboard, Heart, ShieldCheck, Sun, Moon, Globe } from 'lucide-react';
+import { Menu, X, Compass, User, LogOut, LayoutDashboard, Heart, ShieldCheck, Sun, Moon, Globe, Bell, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { API_BASE } from '../../api/endpoints';
+import { API_BASE, notificationsAPI } from '../../api/endpoints';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuthStore();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Fetch notifications periodically
+  const { data: notificationsData } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => notificationsAPI.getAll().then(res => res.data.data),
+    enabled: isAuthenticated,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  const markAsReadMutation = useMutation({
+    mutationFn: (id) => notificationsAPI.markAsRead(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  const markAllAsReadMutation = useMutation({
+    mutationFn: () => notificationsAPI.markAllAsRead(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
 
   useEffect(() => {
     document.documentElement.classList.remove('dark');
@@ -89,10 +110,83 @@ export default function Navbar() {
 
 
             {isAuthenticated ? (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-5">
+                {/* Notifications */}
                 <div className="relative">
                   <button
-                    onClick={() => setProfileOpen(!profileOpen)}
+                    onClick={() => {
+                      setNotificationsOpen(!notificationsOpen);
+                      setProfileOpen(false);
+                    }}
+                    className="relative p-2 text-gray-300 hover:text-gold-500 transition-colors focus:outline-none"
+                  >
+                    <Bell className="h-5 w-5" />
+                    {notificationsData?.unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center text-[9px] font-bold text-white border border-navy-500">
+                        {notificationsData.unreadCount > 9 ? '9+' : notificationsData.unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  <AnimatePresence>
+                    {notificationsOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute right-0 mt-3 w-80 bg-navy-600 border border-gold-500/20 rounded-lg shadow-xl z-50 overflow-hidden"
+                      >
+                        <div className="px-4 py-3 border-b border-gold-500/10 flex justify-between items-center bg-navy-700">
+                          <div className="font-bold text-gold-500 text-sm tracking-widest uppercase">Notifications</div>
+                          {notificationsData?.unreadCount > 0 && (
+                            <button 
+                              onClick={() => markAllAsReadMutation.mutate()}
+                              className="text-xs text-gold-500 hover:text-gold-400 font-medium"
+                            >
+                              Mark all as read
+                            </button>
+                          )}
+                        </div>
+                        <div className="max-h-80 overflow-y-auto">
+                          {notificationsData?.notifications?.length > 0 ? (
+                            notificationsData.notifications.map(notif => (
+                              <div 
+                                key={notif._id} 
+                                onClick={() => {
+                                  if (!notif.isRead) markAsReadMutation.mutate(notif._id);
+                                  if (notif.link) {
+                                    navigate(notif.link);
+                                    setNotificationsOpen(false);
+                                  }
+                                }}
+                                className={`px-4 py-3 border-b border-gold-500/10 cursor-pointer transition-colors ${notif.isRead ? 'opacity-60 hover:bg-navy-500' : 'bg-navy-500 hover:bg-navy-400'}`}
+                              >
+                                <div className="flex justify-between items-start mb-1">
+                                  <div className="font-semibold text-xs text-white">{notif.title}</div>
+                                  {!notif.isRead && <span className="h-2 w-2 rounded-full bg-gold-500 shrink-0 mt-1"></span>}
+                                </div>
+                                <p className="text-[11px] text-gray-300 leading-snug">{notif.message}</p>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="px-4 py-8 text-center text-gray-400 text-xs">
+                              <Bell className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                              <p>No notifications yet</p>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Profile */}
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      setProfileOpen(!profileOpen);
+                      setNotificationsOpen(false);
+                    }}
                     className="h-9 w-9 rounded-full overflow-hidden border border-gold-500 bg-gold-600 flex items-center justify-center text-navy-900 font-bold focus:outline-none focus:ring-2 focus:ring-gold-500 hover:border-gold-400 transition-colors"
                   >
                     {user?.avatar ? (

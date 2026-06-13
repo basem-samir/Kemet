@@ -5,6 +5,7 @@ import { landmarksAPI, reviewsAPI, favoritesAPI, itinerariesAPI, bookingsAPI } f
 import { useAuthStore } from '../store/authStore';
 import { MapPin, Clock, Tag, Star, ArrowLeft, Heart, MessageSquare, AlertCircle, Calendar, ExternalLink, Compass, ShieldAlert, Check, X, ChevronLeft, ChevronRight, Phone, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import BookingSuccessModal from '../components/BookingSuccessModal';
 
 export default function LandmarkDetails() {
   const { slug } = useParams();
@@ -40,6 +41,7 @@ export default function LandmarkDetails() {
 
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [planSuccessMsg, setPlanSuccessMsg] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
@@ -297,7 +299,7 @@ export default function LandmarkDetails() {
     onSuccess: (res) => {
       const booking = res.data.data?.booking || res.data.booking || res.data;
       if (booking?._id || booking?.id) {
-        navigate(`/payment?bookingId=${booking._id || booking.id}`);
+        setShowSuccessModal(true);
       }
     },
     onError: (err) => {
@@ -832,6 +834,14 @@ export default function LandmarkDetails() {
           </div>
         </div>
       )}
+
+      <BookingSuccessModal 
+        isOpen={showSuccessModal} 
+        onClose={() => {
+          setShowSuccessModal(false);
+          navigate('/dashboard/bookings');
+        }} 
+      />
     </div>
   );
 }

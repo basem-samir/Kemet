@@ -203,9 +203,11 @@ export default function MyBookings() {
                 
                 return currentBookings.map((booking) => {
                 const isPending = booking.status === 'pending';
+                const isAccepted = booking.status === 'accepted';
                 const isConfirmed = booking.status === 'confirmed';
                 const isCompleted = booking.status === 'completed';
                 const isCancelled = booking.status === 'cancelled';
+                const isRejected = booking.status === 'rejected';
                 
                 const bType = booking.booking_type || booking.bookingType || booking.type;
                 let typeIcon = Calendar;
@@ -255,23 +257,27 @@ export default function MyBookings() {
                         <span className={`px-2.5 py-1 text-[10px] rounded-full font-bold uppercase border ${
                           isConfirmed || isCompleted
                             ? 'bg-green-50 text-green-700 border-green-200' 
-                            : isCancelled 
+                            : isCancelled || isRejected
                             ? 'bg-red-50 text-red-700 border-red-200' 
+                            : isAccepted
+                            ? 'bg-blue-50 text-blue-700 border-blue-200'
                             : 'bg-yellow-50 text-yellow-700 border-yellow-200'
                         }`}>
-                          {booking.status}
+                          {isPending ? 'Pending Approval' : booking.status}
                         </span>
 
                         {/* Actions */}
-                        {isPending && (
+                        {(isPending || isAccepted) && (
                           <div className="flex items-center space-x-2">
-                            <Link 
-                              to={`/payment?bookingId=${booking._id}`}
-                              className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-3 py-1.5 rounded-lg text-[10px] flex items-center space-x-1 shadow transition"
-                            >
-                              <CreditCard className="h-3 w-3" />
-                              <span>Pay Now</span>
-                            </Link>
+                            {isAccepted && (
+                              <Link 
+                                to={`/payment?bookingId=${booking._id}`}
+                                className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-3 py-1.5 rounded-lg text-[10px] flex items-center space-x-1 shadow transition"
+                              >
+                                <CreditCard className="h-3 w-3" />
+                                <span>Pay Now</span>
+                              </Link>
+                            )}
 
                             <button
                               onClick={() => setConfirmCancelId(booking._id)}

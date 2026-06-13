@@ -5,6 +5,7 @@ import { landmarksAPI, governoratesAPI, itinerariesAPI, hotelsAPI, bookingsAPI, 
 import { useAuthStore } from '../store/authStore';
 import { Compass, Calendar, DollarSign, MapPin, Sparkles, Building2, Plus, Trash2, ArrowRight, Save, Search, AlertCircle, Check, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import BookingSuccessModal from '../components/BookingSuccessModal';
 
 export default function ProgramBuilder() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function ProgramBuilder() {
   // Basic Details
   const [title, setTitle] = useState('My Custom Egypt Adventure');
   const [description, setDescription] = useState('A custom itinerary planned step-by-step.');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [budget, setBudget] = useState(1000);
   const [duration, setDuration] = useState(3);
   const [isPublic, setIsPublic] = useState(false);
@@ -193,12 +195,7 @@ export default function ProgramBuilder() {
   const bookCustomTripMutation = useMutation({
     mutationFn: (data) => bookingsAPI.bookCustomTrip(data),
     onSuccess: (res) => {
-      const booking = res.data?.data?.booking || res.data?.booking || res.data;
-      setSuccessMsg('Custom program saved! Initiating booking payment...');
-      setTimeout(() => {
-        setSuccessMsg('');
-        navigate(`/payment?bookingId=${booking._id || booking.id}`);
-      }, 1500);
+      setShowSuccessModal(true);
     },
     onError: (err) => {
       setErrorMsg(err.response?.data?.message || 'Failed to book custom program.');
@@ -758,6 +755,13 @@ export default function ProgramBuilder() {
         </div>
 
       </div>
+      <BookingSuccessModal 
+        isOpen={showSuccessModal} 
+        onClose={() => {
+          setShowSuccessModal(false);
+          navigate('/dashboard/bookings');
+        }} 
+      />
     </div>
   );
 }

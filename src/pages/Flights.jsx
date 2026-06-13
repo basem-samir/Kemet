@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/authStore';
 import { flightsAPI, bookingsAPI } from '../api/endpoints';
 import { Plane, Calendar, Users, Search, DollarSign, Loader2, AlertCircle, CheckCircle, ShieldAlert, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import { useEffect } from 'react';
+import BookingSuccessModal from '../components/BookingSuccessModal';
 
 const AIRPORTS = [
   { code: 'CAI', name: 'Cairo International (CAI)' },
@@ -64,6 +65,7 @@ export default function Flights() {
   const [travelDate, setTravelDate] = useState('');
   const [passengers, setPassengers] = useState(1);
   const [bookingError, setBookingError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Fetch flights
   const { data: flightsData, isLoading } = useQuery({
@@ -124,11 +126,7 @@ export default function Flights() {
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['publicFlights'] });
       const bookingId = res?.data?.data?.booking?._id || res?.data?.booking?._id;
-      if (bookingId) {
-        navigate(`/payment?bookingId=${bookingId}`);
-      } else {
-        navigate('/dashboard/bookings');
-      }
+      setShowSuccessModal(true);
     },
     onError: (err) => {
       setBookingError(err.response?.data?.message || 'Failed to initialize booking.');
@@ -621,7 +619,7 @@ export default function Flights() {
                     className="bg-[#c1a249] hover:bg-[#a68a3b] text-white font-bold py-3.5 px-8 rounded-2xl text-xs shadow-md flex items-center space-x-1.5 transition uppercase tracking-wider"
                   >
                     {bookMutation.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
-                    <span>Checkout Booking</span>
+                    <span>Request Booking</span>
                   </button>
                 </div>
               </div>
@@ -630,6 +628,14 @@ export default function Flights() {
           </div>
         </div>
       )}
+
+      <BookingSuccessModal 
+        isOpen={showSuccessModal} 
+        onClose={() => {
+          setShowSuccessModal(false);
+          navigate('/dashboard/bookings');
+        }} 
+      />
     </div>
   );
 }

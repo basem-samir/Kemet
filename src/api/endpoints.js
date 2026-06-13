@@ -159,12 +159,20 @@ export const usersAPI = {
     }),
 };
 
+export const notificationsAPI = {
+  getAll: () => api.get('/notifications'),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllAsRead: () => api.patch('/notifications/read-all'),
+};
+
 export const adminAPI = {
   getStats: () => api.get('/admin/stats'),
   getUsers: () => api.get('/admin/users'),
   banUser: (id, data) => api.put(`/admin/users/${id}/ban`, data),
   deleteUser: (id) => api.delete(`/admin/users/${id}`),
   getBookings: () => api.get('/admin/bookings'),
+  acceptBooking: (id) => api.put(`/admin/bookings/${id}/accept`),
+  rejectBooking: (id) => api.put(`/admin/bookings/${id}/reject`),
   // FIX: same Content-Type fix as uploadAvatar above
   uploadImage: (formData) =>
     api.post('/admin/upload', formData, {
